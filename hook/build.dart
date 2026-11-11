@@ -14,6 +14,10 @@ void main(List<String> args) async {
       includes: ['third_party/neurosdk2/include'],
       language: Language.cpp,
       std: 'c++17',
+      // Android doesn't ship libc++_shared.so in the APK; link it in.
+      cppLinkStdLib: input.config.code.targetOS == OS.android
+          ? 'c++_static'
+          : null,
     ).run(input: input, output: output);
   });
 }

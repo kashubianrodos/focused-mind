@@ -143,7 +143,7 @@ class RhythmStackedChart extends StatelessWidget {
           leftTitles: const AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 32,
+              reservedSize: 40,
               interval: 50,
             ),
           ),
@@ -152,13 +152,18 @@ class RhythmStackedChart extends StatelessWidget {
               showTitles: true,
               reservedSize: 24,
               interval: maxX / 60 <= 10 ? 60 : (maxX / 60 <= 30 ? 300 : 600),
-              getTitlesWidget: (value, meta) => SideTitleWidget(
-                meta: meta,
-                child: Text(
-                  '${value ~/ 60}m',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ),
+              // fl_chart always labels the last point too; skip it unless
+              // it lands on the interval, or it overprints its neighbour.
+              getTitlesWidget: (value, meta) =>
+                  value % meta.appliedInterval != 0
+                  ? const SizedBox.shrink()
+                  : SideTitleWidget(
+                      meta: meta,
+                      child: Text(
+                        '${value ~/ 60}m',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
             ),
           ),
         ),

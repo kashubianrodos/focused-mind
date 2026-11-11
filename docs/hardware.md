@@ -21,11 +21,25 @@ and the neurosdk2 1.0.21 package):
   these functions; the package's Dart API does not expose them, so the app
   binds them itself (`lib/headband/ffi/`).
 
+## Pairing (verified with the band)
+
+- Mindo must be **bonded** before neurosdk2 can connect; the SDK doesn't
+  bond itself. EEGWaves bonds first for any device whose name contains
+  "black", and so does this app on Android (`MainActivity.kt`, LE legacy
+  pairing with a consent prompt, no PIN).
+- Unbonded, `createSensor` fails with "Sensor unsupported" whatever family
+  is passed (3, 4 or 11).
+- **macOS:** CoreBluetooth sees the band advertising (connectable) but a
+  plain connect gets no answer, and macOS has no public bonding API, so the
+  macOS app can't connect yet.
+- The Android build links libc++ statically into `libfm_shim.so`
+  (`hook/build.dart`); otherwise it fails to load ("Invalid argument(s)").
+
 ## To fill in with the real band (tasks 2.3–2.4, 7.2)
 
 | Item | Value |
 |---|---|
-| Reported `SensFamily` / `SensModel` | 4 (BrainBit Black) per EEGWaves, which scans families 3 + 4 and uses the BrainBit callbacks; model _pending_ |
+| Reported `SensFamily` / `SensModel` | 4 (BrainBit Black) / 0, name "BrainBit Black", `PairingRequired` = 1. Connects as family 4 with the BrainBit callbacks once bonded (verified on Android, Pixel 8) |
 | Sampling rate (`readSamplingFrequencySensor`) | _pending (expected 250 Hz)_ |
 | Resistance with good contact | _pending_ |
 | Resistance with poor contact | _pending_ |

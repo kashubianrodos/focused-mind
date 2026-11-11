@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import 'session_csv.dart';
@@ -10,8 +11,19 @@ import 'session_repository.dart';
 /// Asks the user for a folder; null when they cancel.
 typedef PickFolder = Future<String?> Function();
 
-Future<String?> pickExportFolder() =>
-    getDirectoryPath(confirmButtonText: 'Export here');
+/// macOS asks for a folder. Android's picker returns a `content://` URI that
+/// `dart:io` can't write to, so exports go to Downloads/Focused Mind there.
+Future<String?> pickExportFolder() async {
+  if (!Platform.isAndroid) {
+    return getDirectoryPath(confirmButtonText: 'Export here');
+  }
+  final downloads = await const MethodChannel(
+    'focused_mind/android',
+  ).invokeMethod<String>('downloadsDir');
+  final folder = Directory(p.join(downloads!, 'Focused Mind'));
+  await folder.create(recursive: true);
+  return folder.path;
+}
 
 sealed class ExportResult {
   const ExportResult();

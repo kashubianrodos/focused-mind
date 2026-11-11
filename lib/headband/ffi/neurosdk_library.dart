@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io' show Platform;
 
 import 'neurosdk2_bindings.dart';
 
@@ -13,10 +14,12 @@ class NeuroSdkLoadException implements Exception {
   String toString() => 'NeuroSdkLoadException: $message';
 }
 
-/// Loads `libneurosdk2.dylib`, which the `neurosdk2` plugin bundles into the
+/// Loads `libneurosdk2` (`.dylib` on macOS, `.so` on Android), which the `neurosdk2` plugin bundles into the
 /// app (design D3), and checks every function the app binds before use.
 abstract final class NeuroSdkLibrary {
-  static const fileName = 'libneurosdk2.dylib';
+  static final fileName = Platform.isAndroid
+      ? 'libneurosdk2.so'
+      : 'libneurosdk2.dylib';
 
   /// Every function `ffigen.yaml` binds.
   static const symbols = [
@@ -53,9 +56,10 @@ abstract final class NeuroSdkLibrary {
   ];
 
   static NeuroSdk2Bindings open({
-    String path = fileName,
+    String? path,
     List<String> required = symbols,
   }) {
+    path ??= fileName;
     final DynamicLibrary lib;
     try {
       lib = DynamicLibrary.open(path);

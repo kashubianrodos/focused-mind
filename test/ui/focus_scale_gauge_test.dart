@@ -35,7 +35,7 @@ void main() {
   testWidgets('labels all four zones', (tester) async {
     await pump(tester, 50, const ScoreScale());
     for (final z in FocusZone.values) {
-      expect(find.text(z.label), findsWidgets);
+      expect(find.text(z.label.replaceAll(' ', '\n')), findsWidgets);
     }
   });
 

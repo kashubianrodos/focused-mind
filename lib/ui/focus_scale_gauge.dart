@@ -59,12 +59,17 @@ class FocusScaleGauge extends StatelessWidget {
               children: [
                 for (final z in FocusZone.values)
                   Expanded(
-                    child: Text(
-                      z.label,
-                      textAlign: TextAlign.center,
-                      style: text.labelSmall?.copyWith(
-                        color: z == zone ? zoneColor(z) : null,
-                        fontWeight: z == zone ? FontWeight.bold : null,
+                    // One word per line, shrunk rather than split when a
+                    // word is wider than its quarter (phones, large text).
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        z.label.replaceAll(' ', '\n'),
+                        textAlign: TextAlign.center,
+                        style: text.labelSmall?.copyWith(
+                          color: z == zone ? zoneColor(z) : null,
+                          fontWeight: z == zone ? FontWeight.bold : null,
+                        ),
                       ),
                     ),
                   ),

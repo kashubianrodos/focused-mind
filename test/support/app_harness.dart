@@ -31,13 +31,16 @@ Future<AppHarness> pumpApp(
   MemorySessionRepository? repository,
   FocusEstimator Function()? createEstimator,
   PickFolder? pickExportFolder,
+  Size size = const Size(1280, 1000),
 }) async {
   SharedPreferences.setMockInitialValues({
     if (noticeSeen) 'wellness_notice_seen': true,
     ...prefs,
   });
-  await tester.binding.setSurfaceSize(const Size(1280, 1000));
+  await tester.binding.setSurfaceSize(size);
+  tester.view.physicalSize = size * tester.view.devicePixelRatio;
   addTearDown(() => tester.binding.setSurfaceSize(null));
+  addTearDown(tester.view.resetPhysicalSize);
 
   final audio = FakeAudioOutput();
   final repo = repository ?? MemorySessionRepository();

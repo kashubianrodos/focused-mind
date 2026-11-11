@@ -63,39 +63,50 @@ class LiveSessionView extends ConsumerWidget {
                 leading: const Icon(Icons.bluetooth_searching),
                 actions: [const SizedBox.shrink()],
               ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            // Wraps the pie under the score on a phone.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.end,
+              spacing: 16,
+              runSpacing: 12,
               children: [
-                Text(
-                  reading?.score?.round().toString() ?? '–',
-                  key: const ValueKey('live-score'),
-                  style: text.displayLarge?.copyWith(
-                    color: focusStateColor(state, scheme),
-                    fontWeight: FontWeight.w300,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        state.label,
-                        key: const ValueKey('live-state'),
-                        style: text.titleLarge,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      reading?.score?.round().toString() ?? '–',
+                      key: const ValueKey('live-score'),
+                      style: text.displayLarge?.copyWith(
+                        color: focusStateColor(state, scheme),
+                        fontWeight: FontWeight.w300,
                       ),
-                      Text(
-                        live?.remaining == null
-                            ? 'Elapsed ${formatDuration(live?.elapsed ?? Duration.zero)}'
-                            : 'Elapsed ${formatDuration(live!.elapsed)} · '
-                                  '${formatDuration(live.remaining!)} left',
-                        key: const ValueKey('live-time'),
+                    ),
+                    const SizedBox(width: 16),
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              state.label,
+                              key: const ValueKey('live-state'),
+                              style: text.titleLarge,
+                            ),
+                            Text(
+                              live?.remaining == null
+                                  ? 'Elapsed ${formatDuration(live?.elapsed ?? Duration.zero)}'
+                                  : 'Elapsed ${formatDuration(live!.elapsed)} · '
+                                        '${formatDuration(live.remaining!)} left',
+                              key: const ValueKey('live-time'),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
                 RhythmPie(
                   key: const ValueKey('live-rhythm-pie'),
                   shares: reading?.rhythms,

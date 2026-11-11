@@ -1,6 +1,6 @@
 # Focused Mind
 
-A macOS app that helps you stay focused while you work. It reads EEG from a
+A macOS and Android app that helps you stay focused while you work. It reads EEG from a
 BrainBit-family headband (developed against the **Mindo** band), estimates
 your focus in real time and plays a soundscape (birds or ocean) as feedback:
 
@@ -29,7 +29,8 @@ chart. Sessions recorded before these existed still open without them.
 ### Export
 
 In **History**, the share button on a session (or **Export** in its detail
-view) asks for a folder and writes `focused-mind_<date>_<time>.csv`. That
+view) asks for a folder (on Android it saves to **Downloads › Focused
+Mind** instead) and writes `focused-mind_<date>_<time>.csv`. That
 file has one row per second: time, focus score, state, scale zone, theta,
 alpha and beta %, gaps, feedback mode, and drop/recovery marks. Existing
 files are never overwritten (`_2`, `_3`, … is appended).
@@ -37,11 +38,10 @@ files are never overwritten (`_2`, `_3`, … is appended).
 **Settings › Data › Record raw signal** (off by default) also keeps the full
 250 Hz O1/O2/T3/T4 EEG of each new session, about 20 MB per hour. Export
 then writes a second file, `…_raw.csv`, in microvolts. Deleting a session
-deletes its recording. Android and iPhone
-are planned on the same Flutter codebase.
+deletes its recording. iPhone is planned on the same Flutter codebase.
 
 > The focus score is an estimate for personal, wellness use only. Focused
-> Mind is not a medical device. All data stays on your Mac.
+> Mind is not a medical device. All data stays on your device.
 
 ## Install
 
@@ -63,6 +63,19 @@ allow Bluetooth access when macOS asks.
 
 Alternatively, clear the download flag in Terminal:
 `xattr -dr com.apple.quarantine "/Applications/Focused Mind.app"`.
+
+### Android
+
+Download `FocusedMind-<version>.apk` from the same releases page on the
+phone, open it and allow installing from that app when Android asks
+(Android 11 or later). Allow **Nearby devices** on first launch. On the
+first **Connect**, Android asks to pair with the band: accept it. The
+screen stays on while the app is open.
+
+Without a release keystore (see [CI and releases](#ci-and-releases)), each
+APK is signed with a different key, so uninstall the old version before
+installing a new one. Uninstalling deletes the session history; export
+sessions first.
 
 ## Requirements
 
@@ -97,6 +110,18 @@ Host tests load BrainBit's prebuilt `libEmStArtifacts.dylib` from the pub
 cache, so the focus maths in the tests is the real vendor library.
 
 ## CI and releases
+
+`.github/workflows/android.yml` builds `FocusedMind-<version>.apk` on every
+push and pull request, and attaches it to the release on `v` tags.
+Optional repository secrets sign it with your own key, so new versions
+install over old ones:
+
+| Secret | What |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | Release keystore, base64-encoded (`keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias focused-mind`, then `base64 -i release.jks`) |
+| `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | Its passwords and alias |
+
+Keep the keystore safe: an app signed with a lost key can't be updated.
 
 `.github/workflows/macos.yml` runs on GitHub's macOS runners:
 
@@ -141,9 +166,10 @@ hardened runtime, notarizes the DMG and staples the ticket.
   focus score is relative to that calibrated level, which scores the
   **Baseline** (50 by default). If feedback marks you as distracted too
   often, raise the baseline in Settings; lower it for stricter feedback.
-- Mindo is reported by the BrainBit SDK as the `Headband` device type. See
-  [docs/hardware.md](docs/hardware.md) for what is known and what still needs
-  checking on real hardware.
+- Mindo is reported by the BrainBit SDK as **BrainBit Black** and must be
+  paired (bonded) before it connects. Android pairs it on the first
+  connect. macOS has no public API for that, so **the Mac app can't
+  connect to Mindo yet**. See [docs/hardware.md](docs/hardware.md).
 
 ## Project layout
 
@@ -154,7 +180,8 @@ hardened runtime, notarizes the DMG and staples the ticket.
 | `lib/focus/` | `EmotionalMath` estimator, `FocusEngine` (calibration, 1 Hz smoothed score and rhythm shares), baseline-centred `ScoreScale` and scale zones, focus states |
 | `lib/feedback/` | Drop/recovery tracking, gain policy for both modes, audio playback |
 | `lib/sessions/` | Session lifecycle, recording, local JSON storage, raw EEG recording, CSV export |
-| `lib/ui/`, `lib/app/` | Screens, app wiring, menu bar |
+| `lib/ui/`, `lib/app/` | Screens, app wiring, menu bar (macOS) |
+| `android/` | Android app: Bluetooth permissions, pairing before connect, Downloads folder for export (`MainActivity.kt`) |
 | `third_party/neurosdk2/` | Vendored C headers for the FFI binding (`dart run ffigen --config ffigen.yaml`) |
 | `assets/sounds/` | Generated soundscapes (`python3 tool/generate_sounds.py`), see `LICENSES.md` |
 | `openspec/` | Specs, design and task list for this change |
