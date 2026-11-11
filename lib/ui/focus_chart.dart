@@ -1,0 +1,129 @@
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+
+import '../sessions/session_models.dart';
+
+/// Focus score over a session; gaps and unavailable seconds break the line,
+/// disconnection gaps are shaded and the threshold is drawn as a line.
+class FocusChart extends StatelessWidget {
+  const FocusChart({
+    super.key,
+    required this.points,
+    required this.marks,
+    required this.threshold,
+  });
+
+  final List<TimelinePoint> points;
+  final List<SessionMark> marks;
+  final double threshold;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final spots = [
+      for (final p in points)
+        p.score == null
+            ? FlSpot.nullSpot
+            : FlSpot(p.second.toDouble(), p.score!),
+    ];
+    final maxX = points.isEmpty ? 60.0 : points.last.second.toDouble();
+    final gaps = <VerticalRangeAnnotation>[];
+    int? gapStart;
+    for (final m in marks) {
+      if (m.kind == MarkKind.gapStart) gapStart = m.second;
+      if (m.kind == MarkKind.gapEnd && gapStart != null) {
+        gaps.add(_gap(gapStart, m.second, scheme));
+        gapStart = null;
+      }
+    }
+    if (gapStart != null) gaps.add(_gap(gapStart, maxX.toInt() + 1, scheme));
+
+    return LineChart(
+      duration: Duration.zero,
+      LineChartData(
+        minY: 0,
+        maxY: 100,
+        minX: 0,
+        maxX: maxX < 60 ? 60 : maxX,
+        clipData: const FlClipData.all(),
+        gridData: const FlGridData(drawVerticalLine: false),
+        borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
+        rangeAnnotations: RangeAnnotations(verticalRangeAnnotations: gaps),
+        extraLinesData: ExtraLinesData(
+          horizontalLines: [
+            HorizontalLine(
+              y: threshold,
+              color: scheme.tertiary,
+              strokeWidth: 1,
+              dashArray: const [6, 4],
+            ),
+          ],
+          verticalLines: [
+            for (final m in marks)
+              if (m.kind == MarkKind.drop || m.kind == MarkKind.recovery)
+                VerticalLine(
+                  x: m.second.toDouble(),
+                  color: m.kind == MarkKind.drop
+                      ? scheme.error.withValues(alpha: 0.5)
+                      : Colors.green.withValues(alpha: 0.5),
+                  strokeWidth: 1,
+                ),
+          ],
+        ),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(),
+          rightTitles: const AxisTitles(),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 32,
+              interval: 25,
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 24,
+              interval: _labelInterval(maxX),
+              getTitlesWidget: (value, meta) => SideTitleWidget(
+                meta: meta,
+                child: Text(
+                  '${value ~/ 60}m',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ),
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: false,
+            color: scheme.primary,
+            barWidth: 2,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: scheme.primary.withValues(alpha: 0.12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  VerticalRangeAnnotation _gap(int from, int to, ColorScheme scheme) =>
+      VerticalRangeAnnotation(
+        x1: from.toDouble(),
+        x2: to.toDouble(),
+        color: scheme.outline.withValues(alpha: 0.15),
+      );
+
+  static double _labelInterval(double maxX) {
+    final minutes = maxX / 60;
+    if (minutes <= 10) return 60;
+    if (minutes <= 30) return 300;
+    return 600;
+  }
+}

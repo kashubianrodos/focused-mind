@@ -1,0 +1,30 @@
+PODS:
+  - em_st_artifacts (1.0.0):
+    - FlutterMacOS
+  - FlutterMacOS (1.0.0)
+  - neurosdk2 (1.0.13):
+    - Flutter
+    - flutter_neurosdk2_ios (= 1.0.8)
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - em_st_artifacts (from `Flutter/ephemeral/.symlinks/plugins/em_st_artifacts/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - neurosdk2 (from `Flutter/ephemeral/.symlinks/plugins/neurosdk2/darwin`)
+
+EXTERNAL SOURCES:
+  em_st_artifacts:
+    :path: Flutter/ephemeral/.symlinks/plugins/em_st_artifacts/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  neurosdk2:
+    :path: Flutter/ephemeral/.symlinks/plugins/neurosdk2/darwin
+
+SPEC CHECKSUMS:
+  em_st_artifacts: f76cdd85b79588a7d14a29902d74db7a7c26c262
+  FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
+  neurosdk2: 227b78da0df7ffe6a2344791e2f0c856981e567a
+
+PODFILE CHECKSUM: 1e95c36afbfd1cb6423ceca4de7a8e1b256fb6ac
+
+COCOAPODS: 1.17.0
