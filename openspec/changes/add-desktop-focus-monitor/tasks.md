@@ -30,7 +30,7 @@
 - [x] 3.1 Define the `HeadbandSource` interface, `EegSample`, `ContactQuality`, `ConnectionState` and `DeviceInfo` models. Verify they compile, with unit tests for the ohm→quality mapping (good <500 kΩ, fair <2 MΩ, poor otherwise or infinite).
 - [x] 3.2 Implement `SimulatedHeadbandSource`: synthetic 4-channel EEG with controllable alpha/beta mix (focus level), contact quality, battery and forced disconnects. Verify with unit tests that the sample rate is 250 Hz and that setting focus high or low shifts `relAttention` in the matching direction through `EmotionalMath`.
 - [ ] 3.3 Implement `NeuroSdkHeadbandSource` on the FFI bindings, behind a thin `NeuroSdkApi` wrapper so it can be faked.
-  - Scan with a 15 s timeout; connect with a 20 s timeout.
+  - Scan with a 15 s timeout; connect with a 60 s timeout (Mindo may need several createSensor attempts).
   - Pick Headband, BrainBit or BrainBit2 signal/resist callbacks by the reported `SensFamily`.
   - Switch between resist and signal modes via `execCommandSensor`.
   - Battery via `addBatteryCallback`; connection state via `addConnectionStateCallback`.

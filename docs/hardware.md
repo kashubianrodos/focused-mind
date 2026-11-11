@@ -25,7 +25,7 @@ and the neurosdk2 1.0.21 package):
 
 | Item | Value |
 |---|---|
-| Reported `SensFamily` / `SensModel` | _pending_ |
+| Reported `SensFamily` / `SensModel` | 4 (BrainBit Black) per EEGWaves, which scans families 3 + 4 and uses the BrainBit callbacks; model _pending_ |
 | Sampling rate (`readSamplingFrequencySensor`) | _pending (expected 250 Hz)_ |
 | Resistance with good contact | _pending_ |
 | Resistance with poor contact | _pending_ |

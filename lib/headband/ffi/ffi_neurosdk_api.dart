@@ -71,8 +71,14 @@ class FfiNeuroSdkApi implements NeuroSdkApi {
     if (_scanner == nullptr) startScan();
     final scanner = _scanner.address;
     final address = device.address;
-    final sensor = await Isolate.run(() => _createSensor(scanner, address));
-    return _FfiSensor(_sdk, Pointer.fromAddress(sensor), device.family);
+    final (sensor, code) = await Isolate.run(
+      () => _createSensor(scanner, address),
+    );
+    return _FfiSensor(
+      _sdk,
+      Pointer.fromAddress(sensor),
+      SensorFamilyCode.toFamily(code)!,
+    );
   }
 
   @override
@@ -128,8 +134,14 @@ List<(DeviceInfo, int)> _readSensors(
 }
 
 /// Runs on a helper isolate: waits up to 10 s for [address] to show up in
-/// the scan, then creates (and thereby connects) the sensor.
-int _createSensor(int scannerAddress, String address) {
+/// the scan, then creates (and thereby connects) the sensor. Returns the
+/// sensor and the family code it was created as.
+///
+/// Mindo scans as BrainBit Black (4), which this SDK drives with the newer
+/// NeuroSmart protocol and rejects as "unsupported"; EEGWaves' older SDK
+/// talks to it as classic BrainBit. So family 4 retries as BrainBit (3),
+/// then Headband (11).
+(int, int) _createSensor(int scannerAddress, String address) {
   final sdk = NeuroSdkLibrary.open(required: const []);
   final scanner = Pointer<SensorScanner>.fromAddress(scannerAddress);
   final deadline = DateTime.now().add(const Duration(seconds: 10));
@@ -142,13 +154,35 @@ int _createSensor(int scannerAddress, String address) {
         final size = arena<Int32>()..value = capacity;
         final status = arena<OpStatus>();
         sdk.sensorsScanner(scanner, infos, size, status);
-        final sensor = sdk.createSensor(scanner, infos[index], status);
-        if (sensor == nullptr || status.ref.Success == 0) {
-          throw StateError(
-            'Could not connect: ${_string(status.ref.ErrorMsg, 512)}',
-          );
+        final reported = infos[index].SensFamily;
+        // ignore: avoid_print
+        print(
+          'neurosdk: ${_string(infos[index].Name, 256)} family $reported '
+          'model ${infos[index].SensModel} '
+          'pairing ${infos[index].PairingRequired} rssi ${infos[index].RSSI}',
+        );
+        final codes = reported == SensorFamilyCode.brainBitBlack
+            ? const [
+                SensorFamilyCode.brainBitBlack,
+                SensorFamilyCode.brainBit,
+                SensorFamilyCode.headband,
+              ]
+            : [reported];
+        final errors = <String>[];
+        for (final code in codes) {
+          infos[index].SensFamily = code;
+          final sensor = sdk.createSensor(scanner, infos[index], status);
+          if (sensor != nullptr && status.ref.Success != 0) {
+            // ponytail: keep until hardware.md records the working family.
+            // ignore: avoid_print
+            print('neurosdk: $address connected as family $code');
+            return (sensor.address, code);
+          }
+          errors.add('family $code: ${_string(status.ref.ErrorMsg, 512)}');
+          // ignore: avoid_print
+          print('neurosdk: ${DateTime.now()} ${errors.last}');
         }
-        return sensor.address;
+        throw StateError('Could not connect: ${errors.join('; ')}');
       });
     }
     if (DateTime.now().isAfter(deadline)) {

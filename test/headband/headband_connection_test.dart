@@ -77,7 +77,7 @@ void main() {
       });
     });
 
-    test('times out after 20 s and reports disconnected', () {
+    test('times out after 60 s and reports disconnected', () {
       fakeAsync((async) {
         create();
         source.onConnect = null; // hangs
@@ -85,7 +85,7 @@ void main() {
         connection.connect(testDevice).catchError((Object e) {
           error = e;
         });
-        async.elapse(const Duration(seconds: 19));
+        async.elapse(const Duration(seconds: 59));
         expect(connection.state.value, HeadbandConnectionState.connecting);
         async.elapse(const Duration(seconds: 1));
         expect(error, isA<ConnectTimeoutException>());

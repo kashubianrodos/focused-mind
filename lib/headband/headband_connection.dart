@@ -22,7 +22,7 @@ class HeadbandConnection {
   HeadbandConnection(
     this.source, {
     this.scanTimeout = const Duration(seconds: 15),
-    this.connectTimeout = const Duration(seconds: 20),
+    this.connectTimeout = const Duration(seconds: 60),
     this.reconnectInterval = const Duration(seconds: 5),
     this.reconnectWindow = const Duration(seconds: 60),
   }) {

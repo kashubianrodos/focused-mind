@@ -17,14 +17,18 @@ enum SensorCommandKind {
 /// neurosdk2 `SensorFamily` codes the app scans for (design D3).
 abstract final class SensorFamilyCode {
   static const brainBit = 3;
+
+  /// Mindo reports as BrainBit Black and streams like BrainBit (the
+  /// EEGWaves app scans for it this way).
+  static const brainBitBlack = 4;
   static const headband = 11;
   static const brainBit2 = 18;
 
-  static const scanFilters = [headband, brainBit, brainBit2];
+  static const scanFilters = [headband, brainBit, brainBitBlack, brainBit2];
 
   static HeadbandFamily? toFamily(int code) => switch (code) {
     headband => HeadbandFamily.headband,
-    brainBit => HeadbandFamily.brainBit,
+    brainBit || brainBitBlack => HeadbandFamily.brainBit,
     brainBit2 => HeadbandFamily.brainBit2,
     _ => null,
   };
