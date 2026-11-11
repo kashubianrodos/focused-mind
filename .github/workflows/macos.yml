@@ -73,8 +73,10 @@ jobs:
           --build-number "${{ github.run_number }}"
 
       # Optional Developer ID signing and notarization. Without these
-      # secrets the app keeps Flutter's ad-hoc signature, and users open it
-      # the first time with right-click › Open.
+      # secrets the app keeps Flutter's ad-hoc signature, and macOS blocks
+      # its first launch: users allow it under System Settings › Privacy &
+      # Security › Open Anyway (right-click › Open no longer works on
+      # macOS 15+). See README "Install" and "CI and releases".
       - name: Import signing certificate
         id: signing
         env:

@@ -43,6 +43,27 @@ are planned on the same Flutter codebase.
 > The focus score is an estimate for personal, wellness use only. Focused
 > Mind is not a medical device. All data stays on your Mac.
 
+## Install
+
+Download `FocusedMind-<version>.dmg` from the
+[releases](https://github.com/kashubianrodos/focused-mind/releases) and
+drag **Focused Mind** into **Applications**.
+
+Release builds are not signed with an Apple Developer ID yet, so macOS
+blocks the first launch ("Apple could not verify…"). Right-click › Open no
+longer gets past this on macOS 15 and later. To open it:
+
+1. Double-click **Focused Mind**, and click **Done** on the warning.
+2. Open **System Settings › Privacy & Security** and scroll down to the
+   message that Focused Mind was blocked.
+3. Click **Open Anyway** and confirm with your password or Touch ID.
+
+You only need to do this once per downloaded version. On first scan, also
+allow Bluetooth access when macOS asks.
+
+Alternatively, clear the download flag in Terminal:
+`xattr -dr com.apple.quarantine "/Applications/Focused Mind.app"`.
+
 ## Requirements
 
 - macOS 12 or later
@@ -87,10 +108,18 @@ cache, so the focus maths in the tests is the real vendor library.
   `FocusedMind-<version>.dmg`. The version comes from the tag. Tags with a
   `-`, such as `v0.2.0-beta.1`, are marked as pre-releases.
 
-Without signing secrets the app is ad-hoc signed. macOS then blocks the
-first launch: right-click the app and choose **Open**, or allow it in
-System Settings › Privacy & Security. To ship a signed and notarized DMG,
-add these repository secrets:
+Without signing secrets the app keeps an ad-hoc signature, and users have
+to allow the first launch under System Settings › Privacy & Security (see
+[Install](#install)). To ship a signed and notarized DMG that opens without
+a warning:
+
+1. Join the Apple Developer Program.
+2. Create a **Developer ID Application** certificate (Xcode › Settings ›
+   Accounts › Manage Certificates), then export it with its private key
+   from Keychain Access as a password-protected `.p12`.
+3. Create an app-specific password for your Apple ID at appleid.apple.com.
+4. Add these repository secrets, for example with
+   `gh secret set MACOS_CERTIFICATE_P12 < <(base64 -i cert.p12)`:
 
 | Secret | What |
 |---|---|
@@ -98,6 +127,9 @@ add these repository secrets:
 | `MACOS_CERTIFICATE_PASSWORD` | Password of that .p12 |
 | `MACOS_SIGNING_IDENTITY` | e.g. `Developer ID Application: Your Name (TEAMID)` |
 | `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_SPECIFIC_PASSWORD` | For notarization (`notarytool`); app-specific password from appleid.apple.com |
+
+Then push a new `v` tag. CI signs BrainBit's libraries and the app with the
+hardened runtime, notarizes the DMG and staples the ticket.
 
 ## Headband
 
