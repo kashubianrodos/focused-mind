@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -71,7 +73,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     final result = await _services.export.export(s.id);
     final message = switch (result) {
       ExportSaved(:final folder, :final files) =>
-        'Exported ${files.join(' and ')} to $folder',
+        'Exported ${files.join(' and ')} to '
+            '${Platform.isIOS ? 'Files › On My iPhone › Focused Mind' : folder}',
       ExportCancelled() => null,
       ExportFailed(:final message) => 'Export failed: $message',
     };

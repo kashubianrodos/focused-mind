@@ -1,0 +1,36 @@
+PODS:
+  - em_st_artifacts (1.0.0):
+    - Flutter
+  - Flutter (1.0.0)
+  - flutter_neurosdk2_ios (1.0.8)
+  - neurosdk2 (1.0.13):
+    - Flutter
+    - flutter_neurosdk2_ios (= 1.0.8)
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - em_st_artifacts (from `.symlinks/plugins/em_st_artifacts/ios`)
+  - Flutter (from `Flutter`)
+  - neurosdk2 (from `.symlinks/plugins/neurosdk2/darwin`)
+
+SPEC REPOS:
+  trunk:
+    - flutter_neurosdk2_ios
+
+EXTERNAL SOURCES:
+  em_st_artifacts:
+    :path: ".symlinks/plugins/em_st_artifacts/ios"
+  Flutter:
+    :path: Flutter
+  neurosdk2:
+    :path: ".symlinks/plugins/neurosdk2/darwin"
+
+SPEC CHECKSUMS:
+  em_st_artifacts: 312ee7844f7fa7747c449f85d0b60e993d4775eb
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
+  flutter_neurosdk2_ios: ec35bafb91b55adf96119d17a58c1ddbf40baa65
+  neurosdk2: 227b78da0df7ffe6a2344791e2f0c856981e567a
+
+PODFILE CHECKSUM: 53a6aebc29ccee84c41f92f409fc20cd4ca011f1
+
+COCOAPODS: 1.17.0

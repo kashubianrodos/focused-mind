@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'session_csv.dart';
 import 'session_models.dart';
@@ -13,7 +14,10 @@ typedef PickFolder = Future<String?> Function();
 
 /// macOS asks for a folder. Android's picker returns a `content://` URI that
 /// `dart:io` can't write to, so exports go to Downloads/Focused Mind there.
+/// iOS has no folder picker: exports go to the app's Documents folder, which
+/// the Files app shows under "On My iPhone › Focused Mind".
 Future<String?> pickExportFolder() async {
+  if (Platform.isIOS) return (await getApplicationDocumentsDirectory()).path;
   if (!Platform.isAndroid) {
     return getDirectoryPath(confirmButtonText: 'Export here');
   }

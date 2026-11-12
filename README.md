@@ -1,6 +1,6 @@
 # Focused Mind
 
-A macOS and Android app that helps you stay focused while you work. It reads EEG from a
+A macOS, Android and iPhone app that helps you stay focused while you work. It reads EEG from a
 BrainBit-family headband (developed against the **Mindo** band), estimates
 your focus in real time and plays a soundscape (birds or ocean) as feedback:
 
@@ -10,7 +10,7 @@ your focus in real time and plays a soundscape (birds or ocean) as feedback:
   focused you are, and goes quiet when your focus drops.
 
 Sessions (25/50/90 minutes or open-ended) show a live focus graph, a menu bar
-indicator, an end-of-session summary and a local history.
+indicator (macOS), an end-of-session summary and a local history.
 
 During a session the live view also shows, as in BrainBit's EEGWaves app:
 
@@ -33,12 +33,13 @@ view) asks for a folder (on Android it saves to **Downloads › Focused
 Mind** instead) and writes `focused-mind_<date>_<time>.csv`. That
 file has one row per second: time, focus score, state, scale zone, theta,
 alpha and beta %, gaps, feedback mode, and drop/recovery marks. Existing
-files are never overwritten (`_2`, `_3`, … is appended).
+files are never overwritten (`_2`, `_3`, … is appended). On iPhone there is
+no folder picker: exports go to **Files › On My iPhone › Focused Mind**.
 
 **Settings › Data › Record raw signal** (off by default) also keeps the full
 250 Hz O1/O2/T3/T4 EEG of each new session, about 20 MB per hour. Export
 then writes a second file, `…_raw.csv`, in microvolts. Deleting a session
-deletes its recording. iPhone is planned on the same Flutter codebase.
+deletes its recording.
 
 > The focus score is an estimate for personal, wellness use only. Focused
 > Mind is not a medical device. All data stays on your device.
@@ -79,9 +80,44 @@ APK is signed with a different key, so uninstall the old version before
 installing a new one. Uninstalling deletes the session history; export
 sessions first.
 
+### iPhone
+
+The app runs on iPhone (iOS 15 or later; developed for iPhone 15) with the
+same features as on the Mac, except the menu bar indicator. Navigation moves
+to a bottom bar on a phone, and the session keeps running with the screen
+locked: the app declares Bluetooth and audio background modes, and the
+feedback sounds play with the silent switch on and mix with your music.
+
+It needs a real iPhone: BrainBit's EmotionalMath framework ships no simulator
+slice, and the simulator has no Bluetooth anyway.
+
+There is no App Store or TestFlight build yet. To install it on your own
+iPhone with a free Apple ID:
+
+1. In Xcode, **Settings › Accounts**, add your Apple ID.
+2. `open ios/Runner.xcworkspace`, select the **Runner** target ›
+   **Signing & Capabilities**, tick *Automatically manage signing* and pick
+   your *Personal Team*. If the bundle ID is taken, change it to something
+   unique (for example `com.<you>.focusedMind`).
+3. Connect the iPhone by cable, unlock it and tap **Trust**. On the iPhone,
+   turn on **Settings › Privacy & Security › Developer Mode** and restart.
+4. Run `flutter run --release -d <your iPhone>` (see `flutter devices`).
+5. On the iPhone, allow the developer under **Settings › General › VPN &
+   Device Management**, then open Focused Mind and allow Bluetooth.
+
+Apps signed with a free Personal Team expire after 7 days; run step 4 again
+to renew. A paid Apple Developer account removes that limit and allows
+TestFlight.
+
+To build without signing (for example to re-sign with another tool):
+`flutter build ios --release --no-codesign` writes
+`build/ios/iphoneos/Runner.app`.
+
 ## Requirements
 
 - macOS 12 or later
+- For iPhone builds: the iOS platform in Xcode (**Settings › Components**,
+  or `xcodebuild -downloadPlatform iOS`)
 - Flutter 3.47+ (Dart 3.13+): `brew install --cask flutter`
 - Xcode (full install from the App Store), then
   `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` and
