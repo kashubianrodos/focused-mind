@@ -1,5 +1,10 @@
 # Focused Mind
 
+<p align="center">
+  <img src="docs/images/iphone-live-session.jpg" width="295"
+       alt="Live session on iPhone: focus score 82, theta/alpha/beta pie, focus graph and the four-zone scale gauge">
+</p>
+
 A macOS, Android and iPhone app that helps you stay focused while you work. It reads EEG from a
 BrainBit-family headband (developed against the **Mindo** band), estimates
 your focus in real time and plays a soundscape (birds or ocean) as feedback:
