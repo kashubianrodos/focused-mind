@@ -28,11 +28,15 @@ class MainActivity : FlutterActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // ponytail: asks once at launch; a denied permission surfaces as a scan error.
         val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+            mutableListOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
         } else {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-        requestPermissions(perms, 1)
+        // Shows the "session running" notification of SessionService.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            perms += Manifest.permission.POST_NOTIFICATIONS
+        }
+        requestPermissions(perms.toTypedArray(), 1)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -48,6 +52,19 @@ class MainActivity : FlutterActivity() {
                             Environment.DIRECTORY_DOWNLOADS,
                         ).path,
                     )
+                    "startBackground" -> {
+                        val service = Intent(this, SessionService::class.java)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(service)
+                        } else {
+                            startService(service)
+                        }
+                        result.success(null)
+                    }
+                    "stopBackground" -> {
+                        stopService(Intent(this, SessionService::class.java))
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }
