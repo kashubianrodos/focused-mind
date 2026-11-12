@@ -116,7 +116,10 @@ TestFlight.
 
 To build without signing (for example to re-sign with another tool):
 `flutter build ios --release --no-codesign` writes
-`build/ios/iphoneos/Runner.app`.
+`build/ios/iphoneos/Runner.app`. CI also publishes an unsigned
+`FocusedMind-<version>-unsigned.ipa` (see [CI and releases](#ci-and-releases)):
+install it with a tool that re-signs it with your Apple ID, such as
+Sideloadly or AltStore.
 
 ## Requirements
 
@@ -165,6 +168,13 @@ install over old ones:
 | `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | Its passwords and alias |
 
 Keep the keystore safe: an app signed with a lost key can't be updated.
+
+`.github/workflows/ios.yml` builds the iPhone app without code signing on
+every push and pull request, packages it as
+`FocusedMind-<version>-unsigned.ipa` (a run artifact), and attaches it to
+the release on `v` tags. It is unsigned because CI has no Apple
+certificate; re-sign it with your Apple ID to install it, or build from
+source (see [iPhone](#iphone)).
 
 `.github/workflows/macos.yml` runs on GitHub's macOS runners:
 
