@@ -53,4 +53,40 @@ void main() {
       });
     });
   }
+
+  test('full simulated meditation session', () {
+    SharedPreferences.setMockInitialValues({});
+    fakeAsync((async) {
+      final audio = FakeAudioOutput();
+      AppServices? services;
+      AppServices.create(
+        includeSimulator: true,
+        includeDevices: false,
+        audio: audio,
+        sessionRepository: MemorySessionRepository(),
+      ).then((s) => services = s);
+      async.flushMicrotasks();
+
+      Object? error;
+      StackTrace? stack;
+      var done = false;
+      runSimulatedMeditation(
+        services: services!,
+        audio: audio,
+        advance: Future<void>.delayed,
+      ).then(
+        (_) => done = true,
+        onError: (Object e, StackTrace s) {
+          error = e;
+          stack = s;
+        },
+      );
+      async.elapse(const Duration(minutes: 3));
+      if (error != null) Error.throwWithStackTrace(error!, stack!);
+      expect(done, isTrue);
+
+      services!.connection.disconnect();
+      async.elapse(const Duration(seconds: 10));
+    });
+  });
 }

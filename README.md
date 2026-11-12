@@ -1,21 +1,67 @@
 # Focused Mind
 
-<p align="center">
-  <img src="docs/images/iphone-live-session.jpg" width="295"
-       alt="Live session on iPhone: focus score 82, theta/alpha/beta pie, focus graph and the four-zone scale gauge">
-</p>
+A macOS, Android and iPhone app that reads EEG from a BrainBit-family
+headband (developed against the **Mindo** band), estimates in real time how
+focused or calm you are, and guides you with a soundscape (birds or ocean).
 
-A macOS, Android and iPhone app that helps you stay focused while you work. It reads EEG from a
-BrainBit-family headband (developed against the **Mindo** band), estimates
-your focus in real time and plays a soundscape (birds or ocean) as feedback:
+<table align="center">
+  <tr>
+    <th>Focus session</th>
+    <th>Meditation session</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/focus-session.jpg" width="280"
+         alt="Focus session: focus score 79, Focused, rhythm pie, focus graph and the scale gauge in Concentration"></td>
+    <td><img src="docs/images/meditation-session.jpg" width="280"
+         alt="Meditation session: calm score 82, Calm, rhythm pie, calm graph and the mirrored scale gauge in Relaxation"></td>
+  </tr>
+</table>
 
-- **Alert** mode (default): quiet while you are focused; the sound fades in
-  when your focus drops and fades out when you are back.
-- **Continuous** mode: the sound plays while you are focused, louder the more
+## Features
+
+- **Live score** every second: the focus score (or the calm score in a
+  meditation session) with its state, elapsed and remaining time, and a
+  graph of the whole session.
+- **Relaxation–concentration scale**: a gauge with four zones (Deep
+  relaxation, Relaxation, Concentration, Deep concentration) centred on your
+  own calibrated level, with an adjustable baseline.
+- **Brain rhythms**: theta, alpha and beta shares as a pie and as a stacked
+  chart over time.
+- **Sound feedback** with birds or ocean, a trigger delay, volume and a mute
+  button.
+- **Sessions** of 25, 50 or 90 minutes or open-ended, with a short signal
+  check and calibration first. If the headband drops out briefly, the
+  session pauses and resumes.
+- **Summary and history**: time per state and per zone, drops or restless
+  episodes, the longest focused or calm stretch, and average rhythms.
+- **CSV export** of any session, plus an optional recording of the raw EEG.
+- **Menu bar indicator** on macOS. On phones, sessions keep running in the
+  background.
+- **Private**: everything stays on your device.
+
+## Session modes
+
+Choose the mode on the start screen (**Focus | Meditation**). The app
+remembers your last choice, and a label at the top of every session screen
+shows which one is running.
+
+**Focus session**: rewards concentration. The scale runs from Deep
+relaxation on the left to Deep concentration on the right. The sound
+follows one of two feedback modes, set in Settings:
+
+- **Alert** (default): quiet while you are focused. The sound fades in when
+  your focus drops and fades out when you are back.
+- **Continuous**: the sound plays while you are focused, louder the more
   focused you are, and goes quiet when your focus drops.
 
-Sessions (25/50/90 minutes or open-ended) show a live focus graph, a menu bar
-indicator (macOS), an end-of-session summary and a local history.
+**Meditation session**: rewards a calm, relaxed state. The score is turned
+around: the calm score is 100 − the focus score, and the state is **Calm** or
+**Restless**. The scale is mirrored, so the needle moves right as you relax.
+The soundscape plays the whole time you are calm, louder the deeper you
+relax, and goes silent while you are concentrating (see
+[Meditation sessions](#meditation-sessions)).
+
+## In detail
 
 During a session the live view also shows, as in BrainBit's EEGWaves app:
 
@@ -31,13 +77,37 @@ During a session the live view also shows, as in BrainBit's EEGWaves app:
 The summary adds time per scale zone, average rhythm shares and the rhythm
 chart. Sessions recorded before these existed still open without them.
 
+### Meditation sessions
+
+The start screen has a **Focus | Meditation** selector next to the session
+length; it remembers the last type you used. A label at the top of every
+session screen (and in History) says which type is running. A meditation
+session uses the same headband, calibration, rhythms and history, but its
+goal is the calm end of the scale:
+
+- **Calm score**: the big number and the graph show 100 − the focus score,
+  so higher is calmer. You are **Calm** in Relaxation or Deep relaxation and
+  **Restless** in Concentration or Deep concentration. The boundary is your
+  calibrated level (the baseline); the focus threshold isn't used.
+- **Mirrored scale**: the gauge runs Deep concentration → Deep relaxation
+  from left to right, so the needle moves right as you calm down.
+- **Sound**: the soundscape plays the whole time you are calm, louder the
+  deeper you relax (full volume in Deep relaxation). After the trigger
+  delay in Concentration or above it fades out, and it comes back once you
+  are calm again. The Alert/Continuous setting applies only to focus
+  sessions.
+- **Summary**: time calm, longest calm stretch and restless episodes take
+  the place of time focused, longest focus and focus drops.
+
 ### Export
 
 In **History**, the share button on a session (or **Export** in its detail
 view) asks for a folder (on Android it saves to **Downloads › Focused
 Mind** instead) and writes `focused-mind_<date>_<time>.csv`. That
 file has one row per second: time, focus score, state, scale zone, theta,
-alpha and beta %, gaps, feedback mode, and drop/recovery marks. Existing
+alpha and beta %, gaps, feedback mode, drop/recovery marks and the session
+type (`focus` or `meditation`). The focus score is the raw score in both
+types; in meditation sessions the state is `calm` or `restless`. Existing
 files are never overwritten (`_2`, `_3`, … is appended). On iPhone there is
 no folder picker: exports go to **Files › On My iPhone › Focused Mind**.
 

@@ -2,6 +2,7 @@ import '../feedback/feedback_settings.dart';
 import '../focus/focus_score.dart';
 import '../focus/focus_state.dart';
 import '../focus/rhythms.dart';
+import '../focus/session_kind.dart';
 
 /// One second of a session's focus timeline.
 class TimelinePoint {
@@ -84,6 +85,7 @@ class SessionSummary {
     required this.recoveries,
     required this.longestFocused,
     required this.mode,
+    this.kind = SessionKind.focus,
     this.timeInZone = const {},
     this.averageRhythms,
     this.hasRawRecording = false,
@@ -105,6 +107,10 @@ class SessionSummary {
 
   /// The feedback mode when the session started.
   final FeedbackMode mode;
+
+  /// Focus or meditation; sessions saved before session types existed load
+  /// as focus.
+  final SessionKind kind;
 
   /// Time per scale zone, excluding gaps and unavailable seconds; empty for
   /// sessions recorded before zones existed.
@@ -136,6 +142,7 @@ class SessionSummary {
     'recoveries': recoveries,
     'longestFocusedSeconds': longestFocused.inSeconds,
     'mode': mode.name,
+    'kind': kind.name,
     if (timeInZone.isNotEmpty)
       'timeInZone': {
         for (final e in timeInZone.entries) e.key.name: e.value.inSeconds,
@@ -172,6 +179,7 @@ class SessionSummary {
               .where((m) => m.name == json['mode'])
               .firstOrNull ??
           FeedbackMode.alert,
+      kind: SessionKind.fromName(json['kind']),
       timeInZone: {
         for (final z in FocusZone.values)
           if (zones[z.name] is int) z: Duration(seconds: zones[z.name]! as int),

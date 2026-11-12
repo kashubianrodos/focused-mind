@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_mind/feedback/drop_tracker.dart';
 import 'package:focused_mind/focus/focus_state.dart';
 import 'package:focused_mind/focus/rhythms.dart';
+import 'package:focused_mind/focus/session_kind.dart';
 import 'package:focused_mind/sessions/raw_signal.dart';
 import 'package:focused_mind/sessions/session_csv.dart';
 import 'package:focused_mind/sessions/session_models.dart';
@@ -53,7 +54,7 @@ void main() {
     final rows = parse(SessionCsv.timeline(record));
     expect(rows.first, SessionCsv.timelineHeader);
     expect(rows, hasLength(record.timeline.length + 1));
-    expect(rows.skip(1).every((r) => r.length == 11), isTrue);
+    expect(rows.skip(1).every((r) => r.length == 12), isTrue);
 
     expect(rows[1], [
       '0',
@@ -67,16 +68,17 @@ void main() {
       '0',
       'alert',
       '',
+      'focus',
     ]);
-    final drop = rows.indexWhere((r) => r.last == 'drop');
+    final drop = rows.indexWhere((r) => r[10] == 'drop');
     expect(rows[drop][0], '8');
-    final gap = rows.firstWhere((r) => r.last == 'gap_start');
+    final gap = rows.firstWhere((r) => r[10] == 'gap_start');
     expect(gap[8], '1');
     expect(gap[2], '', reason: 'no score during a gap');
     // The unavailable second right after the gap: gap end, empty values.
-    final afterGap = rows.firstWhere((r) => r.last == 'gap_end');
+    final afterGap = rows.firstWhere((r) => r[10] == 'gap_end');
     expect(afterGap.sublist(2, 8), ['', 'unavailable', '', '', '', '']);
-    expect(rows.any((r) => r.last == 'recovery'), isTrue);
+    expect(rows.any((r) => r[10] == 'recovery'), isTrue);
   });
 
   test('a pre-change session has the same columns with empty new cells', () {
@@ -117,7 +119,25 @@ void main() {
       '0',
       'continuous',
       '',
+      'focus',
     ]);
+  });
+
+  test('a meditation session exports its type, calm states and raw scores', () {
+    final r = SessionRecorder(
+      id: 'm',
+      startedAt: DateTime(2026, 11, 12, 21),
+      kind: SessionKind.meditation,
+    );
+    r
+      ..record(score: 20, state: FocusState.focused)
+      ..record(score: 80, state: FocusState.distracted)
+      ..record(score: null, state: FocusState.unavailable);
+    final rows = parse(SessionCsv.timeline(r.finish()));
+    expect(rows.first.last, 'session_type');
+    expect(rows.skip(1).map((r) => r.last), everyElement('meditation'));
+    expect(rows.skip(1).map((r) => r[2]), ['20.0', '80.0', '']);
+    expect(rows.skip(1).map((r) => r[3]), ['calm', 'restless', 'unavailable']);
   });
 
   test('cells with commas or quotes are quoted', () {

@@ -5,6 +5,8 @@ import 'package:focused_mind/feedback/feedback_controller.dart';
 import 'package:focused_mind/feedback/feedback_settings.dart';
 import 'package:focused_mind/focus/focus_score.dart';
 import 'package:focused_mind/focus/focus_engine.dart';
+import 'package:focused_mind/focus/focus_state.dart';
+import 'package:focused_mind/focus/session_kind.dart';
 import 'package:focused_mind/headband/headband_connection.dart';
 import 'package:focused_mind/headband/models.dart';
 import 'package:focused_mind/headband/simulated_headband_source.dart';
@@ -53,8 +55,12 @@ class Harness {
   }
 
   /// Starts a session and runs through signal check and calibration.
-  void startTracking(FakeAsync async, {Duration? planned}) {
-    controller.start(planned: planned);
+  void startTracking(
+    FakeAsync async, {
+    Duration? planned,
+    SessionKind kind = SessionKind.focus,
+  }) {
+    controller.start(planned: planned, kind: kind);
     async.elapse(const Duration(seconds: 2)); // contact report + calibration
     async.elapse(const Duration(seconds: 3));
     expect(controller.phase.value, SessionPhase.running);
@@ -261,6 +267,64 @@ void main() {
         h.controller.live.value!.marks.map((m) => m.kind),
         contains(MarkKind.drop),
       );
+    });
+  });
+
+  test('a meditation session rewards calm: sound while relaxed, silence '
+      'after a restless stretch, back after recovery', () {
+    fakeAsync((async) {
+      final h = Harness();
+      h.connect(async);
+      // Alert in settings must not matter for meditation.
+      h.startTracking(async, kind: SessionKind.meditation);
+      expect(h.controller.live.value!.kind, SessionKind.meditation);
+
+      h.setScore(10); // Deep relaxation
+      async.elapse(const Duration(seconds: 15));
+      expect(h.controller.live.value!.state, FocusState.focused); // Calm
+      expect(h.audio.volume, greaterThan(0.8));
+
+      h.setScore(85); // Concentration and above: restless
+      async.elapse(const Duration(seconds: 20));
+      expect(h.controller.live.value!.state, FocusState.distracted);
+      expect(
+        h.controller.live.value!.marks.map((m) => m.kind),
+        contains(MarkKind.drop),
+      );
+      expect(h.audio.volume, 0);
+
+      h.setScore(10);
+      async.elapse(const Duration(seconds: 20));
+      expect(
+        h.controller.live.value!.marks.map((m) => m.kind),
+        contains(MarkKind.recovery),
+      );
+      expect(h.audio.volume, greaterThan(0.8));
+
+      h.controller.end();
+      async.flushMicrotasks();
+      final summary = h.controller.lastRecord!.summary;
+      expect(summary.kind, SessionKind.meditation);
+      expect(summary.drops, 1);
+      expect(summary.timeIn(FocusState.focused), greaterThan(Duration.zero));
+      expect(summary.timeIn(FocusState.neutral), Duration.zero);
+      expect(
+        h.repository.saved[summary.id]!.summary.kind,
+        SessionKind.meditation,
+      );
+    });
+  });
+
+  test('focus sessions record their kind', () {
+    fakeAsync((async) {
+      final h = Harness();
+      h.connect(async);
+      h.startTracking(async);
+      expect(h.controller.live.value!.kind, SessionKind.focus);
+      async.elapse(const Duration(seconds: 5));
+      h.controller.end();
+      async.flushMicrotasks();
+      expect(h.controller.lastRecord!.summary.kind, SessionKind.focus);
     });
   });
 }

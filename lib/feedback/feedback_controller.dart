@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'audio_output.dart';
+import '../focus/session_kind.dart';
 import 'feedback_settings.dart';
 import 'gain_policy.dart';
 
@@ -24,6 +25,7 @@ class FeedbackController {
   final Duration pauseAfterSilence;
 
   FeedbackSettings _settings;
+  SessionKind _kind = SessionKind.focus;
   bool _active = false;
   bool _muted = false;
   bool _dropActive = false;
@@ -44,9 +46,11 @@ class FeedbackController {
   bool get muted => _muted;
   bool get isAudible => _playing && _gain > 0;
   FeedbackSettings get settings => _settings;
+  SessionKind get kind => _kind;
 
-  /// Starts feedback for a session (after calibration).
-  Future<void> start() async {
+  /// Starts feedback for a session of [kind] (after calibration).
+  Future<void> start({SessionKind kind = SessionKind.focus}) async {
+    _kind = kind;
     _active = true;
     _muted = false;
     _dropActive = false;
@@ -104,6 +108,8 @@ class FeedbackController {
   void _retarget() {
     _target = _active
         ? targetGain(
+            kind: _kind,
+            scale: _settings.scoreScale,
             mode: _settings.mode,
             dropActive: _dropActive,
             score: _lastScore,

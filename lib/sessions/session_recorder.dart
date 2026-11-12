@@ -3,6 +3,7 @@ import '../feedback/feedback_settings.dart';
 import '../focus/focus_score.dart';
 import '../focus/focus_state.dart';
 import '../focus/rhythms.dart';
+import '../focus/session_kind.dart';
 import 'session_models.dart';
 
 /// Records a session's 1 Hz timeline and marks, and computes its summary
@@ -13,12 +14,14 @@ class SessionRecorder {
     required this.startedAt,
     this.plannedDuration,
     this.mode = FeedbackMode.alert,
+    this.kind = SessionKind.focus,
   });
 
   final String id;
   final DateTime startedAt;
   final Duration? plannedDuration;
   final FeedbackMode mode;
+  final SessionKind kind;
 
   final _timeline = <TimelinePoint>[];
   final _marks = <SessionMark>[];
@@ -129,6 +132,7 @@ class SessionRecorder {
         recoveries: _recoveries,
         longestFocused: Duration(seconds: longest),
         mode: mode,
+        kind: kind,
         timeInZone: timeInZone,
         averageRhythms: shares.isEmpty
             ? null

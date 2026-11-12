@@ -56,6 +56,7 @@ and the neurosdk2 1.0.21 package):
 | Typical theta / alpha / beta shares, eyes open, at rest | _pending_ |
 | Same, during focused work | _pending (expect more beta)_ |
 | False alarms in a 25-minute session | _pending_ |
+| Meditation session (calm score, mirrored gauge, sound while calm, silence after concentrating, history and export type) | Works on iPhone with Mindo (2026-11-12); Calm/Restless switching near the boundary not reported as a problem |
 
 ### Note on the score scale
 

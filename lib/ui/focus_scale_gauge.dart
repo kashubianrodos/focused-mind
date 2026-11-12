@@ -3,14 +3,30 @@ import 'package:flutter/material.dart';
 import '../focus/focus_score.dart';
 import 'palette.dart';
 
+/// Horizontal position (0–1) of focus score [value] on the gauge; mirrored
+/// gauges run from Deep concentration on the left to Deep relaxation on the
+/// right (meditation-sessions spec, design D4).
+double gaugeFraction(double value, {bool mirrored = false}) {
+  final f = value.clamp(0, 100) / 100;
+  return mirrored ? 1 - f : f;
+}
+
 /// The four-zone relaxation–concentration scale as a horizontal gauge
 /// (focus-scale spec, design D1/D3). The needle is the focus score; with no
-/// score the gauge shows that the reading is unavailable.
+/// score the gauge shows that the reading is unavailable. [mirrored]
+/// reverses the zone order for meditation sessions, keeping zones, colours
+/// and the semantics value unchanged.
 class FocusScaleGauge extends StatelessWidget {
-  const FocusScaleGauge({super.key, required this.score, required this.scale});
+  const FocusScaleGauge({
+    super.key,
+    required this.score,
+    required this.scale,
+    this.mirrored = false,
+  });
 
   final double? score;
   final ScoreScale scale;
+  final bool mirrored;
 
   Widget _paint(BuildContext context, double? needle) => CustomPaint(
     size: Size.infinite,
@@ -18,6 +34,7 @@ class FocusScaleGauge extends StatelessWidget {
       boundaries: scale.zoneBoundaries,
       needle: needle,
       needleColor: Theme.of(context).colorScheme.onSurface,
+      mirrored: mirrored,
     ),
   );
 
@@ -57,8 +74,10 @@ class FocusScaleGauge extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                for (final z in FocusZone.values)
+                for (final z
+                    in mirrored ? FocusZone.values.reversed : FocusZone.values)
                   Expanded(
+                    key: ValueKey('zone-label-${z.name}'),
                     // One word per line, shrunk rather than split when a
                     // word is wider than its quarter (phones, large text).
                     child: FittedBox(
@@ -87,11 +106,16 @@ class _GaugePainter extends CustomPainter {
     required this.boundaries,
     required this.needle,
     required this.needleColor,
+    required this.mirrored,
   });
 
   final List<double> boundaries;
   final double? needle;
   final Color needleColor;
+  final bool mirrored;
+
+  double _x(Size size, double value) =>
+      size.width * gaugeFraction(value, mirrored: mirrored);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -99,9 +123,14 @@ class _GaugePainter extends CustomPainter {
     final barHeight = size.height * 0.5;
     final edges = [0.0, ...boundaries, 100.0];
     for (var i = 0; i < FocusZone.values.length; i++) {
-      final left = size.width * edges[i] / 100;
-      final right = size.width * edges[i + 1] / 100;
-      final rect = Rect.fromLTRB(left, barTop, right, barTop + barHeight);
+      final a = _x(size, edges[i]);
+      final b = _x(size, edges[i + 1]);
+      final rect = Rect.fromLTRB(
+        a < b ? a : b,
+        barTop,
+        a < b ? b : a,
+        barTop + barHeight,
+      );
       canvas.drawRect(rect, Paint()..color = zoneColor(FocusZone.values[i]));
     }
     final n = needle;
@@ -112,7 +141,7 @@ class _GaugePainter extends CustomPainter {
       );
       return;
     }
-    final x = size.width * n.clamp(0, 100) / 100;
+    final x = _x(size, n);
     canvas.drawLine(
       Offset(x, 0),
       Offset(x, size.height),
@@ -127,5 +156,6 @@ class _GaugePainter extends CustomPainter {
   bool shouldRepaint(_GaugePainter old) =>
       old.needle != needle ||
       old.needleColor != needleColor ||
+      old.mirrored != mirrored ||
       old.boundaries.join() != boundaries.join();
 }

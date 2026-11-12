@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_mind/feedback/feedback_settings.dart';
+import 'package:focused_mind/focus/session_kind.dart';
 import 'package:focused_mind/headband/models.dart';
 import 'package:focused_mind/settings/settings_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -83,5 +84,13 @@ void main() {
     expect(repo.wellnessNoticeSeen, isFalse);
     await repo.markWellnessNoticeSeen();
     expect((await SettingsRepository.open()).wellnessNoticeSeen, isTrue);
+  });
+
+  test('remembers the last session type, focus by default', () async {
+    final repo = await SettingsRepository.open();
+    expect(repo.lastSessionKind, SessionKind.focus);
+    await repo.saveLastSessionKind(SessionKind.meditation);
+    final reopened = await SettingsRepository.open();
+    expect(reopened.lastSessionKind, SessionKind.meditation);
   });
 }

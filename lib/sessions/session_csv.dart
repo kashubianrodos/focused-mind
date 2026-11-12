@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import '../focus/focus_state.dart';
+import '../focus/session_kind.dart';
 import 'raw_signal.dart';
 import 'session_models.dart';
 
@@ -18,6 +20,7 @@ abstract final class SessionCsv {
     'gap',
     'feedback_mode',
     'mark',
+    'session_type',
   ];
 
   /// One row per second of [record]'s timeline; unavailable values are
@@ -28,6 +31,7 @@ abstract final class SessionCsv {
       (marks[m.second] ??= []).add(_markName(m.kind));
     }
     final start = record.summary.startedAt;
+    final kind = record.summary.kind;
     final out = StringBuffer()..write(_row(timelineHeader));
     for (final p in record.timeline) {
       final r = p.rhythms;
@@ -36,7 +40,7 @@ abstract final class SessionCsv {
           '${p.second}',
           _localIso(start.add(Duration(seconds: p.second))),
           _num(p.score),
-          p.state.name,
+          _stateName(p.state, kind),
           p.zone?.name ?? '',
           _num(r?.theta),
           _num(r?.alpha),
@@ -44,11 +48,21 @@ abstract final class SessionCsv {
           p.gap ? '1' : '0',
           p.mode.name,
           (marks[p.second] ?? const []).join(';'),
+          kind.name,
         ]),
       );
     }
     return out.toString();
   }
+
+  /// In meditation sessions the recorded states mean calm and restless
+  /// (meditation-sessions spec, design D2/D6).
+  static String _stateName(FocusState state, SessionKind kind) =>
+      switch ((kind, state)) {
+        (SessionKind.meditation, FocusState.focused) => 'calm',
+        (SessionKind.meditation, FocusState.distracted) => 'restless',
+        _ => state.name,
+      };
 
   static const rawHeader = ['t_s', 'o1_uv', 'o2_uv', 't3_uv', 't4_uv'];
 

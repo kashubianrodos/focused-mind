@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../feedback/feedback_settings.dart';
+import '../focus/session_kind.dart';
 import '../headband/models.dart';
 
 /// Persists user settings on the device (design D8).
@@ -17,6 +18,7 @@ class SettingsRepository {
   static const _lastDeviceKey = 'last_device';
   static const _noticeKey = 'wellness_notice_seen';
   static const _recordRawKey = 'record_raw_signal';
+  static const _lastKindKey = 'last_session_kind';
 
   final SharedPreferences _prefs;
 
@@ -56,6 +58,14 @@ class SettingsRepository {
 
   Future<void> saveRecordRawSignal(bool on) =>
       _prefs.setBool(_recordRawKey, on);
+
+  /// The type of the last session started; the start screen preselects it
+  /// (meditation-sessions spec). Focus until a session has been started.
+  SessionKind get lastSessionKind =>
+      SessionKind.fromName(_prefs.getString(_lastKindKey));
+
+  Future<void> saveLastSessionKind(SessionKind kind) =>
+      _prefs.setString(_lastKindKey, kind.name);
 }
 
 /// The "Record raw signal" setting; changes are saved immediately and take

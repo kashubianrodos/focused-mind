@@ -5,17 +5,22 @@ import '../sessions/session_models.dart';
 
 /// Focus score over a session; gaps and unavailable seconds break the line,
 /// disconnection gaps are shaded and the threshold is drawn as a line.
+///
+/// With [invert] (meditation sessions, design D3) it plots the calm score,
+/// 100 − focus score; [threshold] is then on the calm scale too.
 class FocusChart extends StatelessWidget {
   const FocusChart({
     super.key,
     required this.points,
     required this.marks,
     required this.threshold,
+    this.invert = false,
   });
 
   final List<TimelinePoint> points;
   final List<SessionMark> marks;
   final double threshold;
+  final bool invert;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +29,7 @@ class FocusChart extends StatelessWidget {
       for (final p in points)
         p.score == null
             ? FlSpot.nullSpot
-            : FlSpot(p.second.toDouble(), p.score!),
+            : FlSpot(p.second.toDouble(), invert ? 100 - p.score! : p.score!),
     ];
     final maxX = points.isEmpty ? 60.0 : points.last.second.toDouble();
     final gaps = <VerticalRangeAnnotation>[];

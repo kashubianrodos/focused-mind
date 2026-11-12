@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_mind/feedback/feedback_settings.dart';
 import 'package:focused_mind/feedback/gain_policy.dart';
+import 'package:focused_mind/focus/focus_score.dart';
+import 'package:focused_mind/focus/session_kind.dart';
 
 double gain({
   FeedbackMode mode = FeedbackMode.alert,
@@ -91,5 +93,65 @@ void main() {
         expect(during, before);
       });
     }
+  });
+
+  group('meditation', () {
+    const scale = ScoreScale(); // boundary 50, Deep relaxation below ~12
+    double med({
+      bool drop = false,
+      double? score = 30,
+      FeedbackMode mode = FeedbackMode.alert,
+      double volume = 1,
+      bool muted = false,
+      int unavailableSeconds = 0,
+      ScoreScale scale = scale,
+    }) => targetGain(
+      kind: SessionKind.meditation,
+      scale: scale,
+      mode: mode,
+      dropActive: drop,
+      score: score,
+      threshold: 40,
+      volume: volume,
+      muted: muted,
+      unavailableFor: Duration(seconds: unavailableSeconds),
+    );
+
+    test('silent during a restless episode or without a score', () {
+      expect(med(drop: true, score: 5), 0);
+      expect(med(score: null), 0);
+    });
+
+    test('floor at the boundary, full volume in Deep relaxation', () {
+      expect(med(score: 50), closeTo(0.4, 1e-9));
+      expect(med(score: 70), closeTo(0.4, 1e-9)); // restless, no episode yet
+      expect(med(score: scale.zoneBoundaries.first), closeTo(1, 1e-9));
+      expect(med(score: 2), 1);
+      expect(med(score: 20), greaterThan(med(score: 40)));
+    });
+
+    test('ignores the feedback mode', () {
+      for (final mode in FeedbackMode.values) {
+        expect(med(mode: mode, score: 20), med(score: 20));
+        expect(med(mode: mode, drop: true), 0);
+      }
+    });
+
+    test('follows the baseline', () {
+      const low = ScoreScale(baseline: 30);
+      expect(med(scale: low, score: 30), closeTo(0.4, 1e-9));
+      expect(med(scale: low, score: 40), closeTo(0.4, 1e-9));
+      expect(
+        med(scale: low, score: low.zoneBoundaries.first),
+        closeTo(1, 1e-9),
+      );
+    });
+
+    test('mute, volume and signal loss apply', () {
+      expect(med(score: 2, volume: 0.5), 0.5);
+      expect(med(score: 2, muted: true), 0);
+      expect(med(score: 2, unavailableSeconds: 11), 0);
+      expect(med(score: 2, unavailableSeconds: 5), 1);
+    });
   });
 }

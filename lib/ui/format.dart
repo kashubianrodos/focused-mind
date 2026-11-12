@@ -1,4 +1,5 @@
 import '../focus/focus_state.dart';
+import '../focus/session_kind.dart';
 
 String formatDuration(Duration d) {
   final h = d.inHours;
@@ -23,3 +24,15 @@ extension FocusStateLabel on FocusState {
     FocusState.unavailable => 'Signal unavailable',
   };
 }
+
+/// The user-visible name of a recorded [state] in a session of [kind]
+/// (design D2): in meditation, `focused` is Calm and `distracted` Restless.
+String stateLabel(FocusState state, SessionKind kind) => switch (kind) {
+  SessionKind.focus => state.label,
+  SessionKind.meditation => switch (state) {
+    FocusState.focused => 'Calm',
+    FocusState.neutral => 'Settling',
+    FocusState.distracted => 'Restless',
+    FocusState.unavailable => 'Signal unavailable',
+  },
+};

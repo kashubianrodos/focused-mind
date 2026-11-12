@@ -8,11 +8,12 @@ import '../feedback/feedback_controller.dart';
 import '../feedback/feedback_settings.dart';
 import '../focus/focus_engine.dart';
 import '../focus/focus_state.dart';
+import '../focus/session_kind.dart';
 import '../headband/headband_connection.dart';
 import '../headband/headband_source.dart';
 import '../headband/models.dart';
-import 'session_models.dart';
 import 'raw_signal.dart';
+import 'session_models.dart';
 import 'session_recorder.dart';
 import 'session_repository.dart';
 
@@ -39,8 +40,10 @@ class LiveSession {
     required this.state,
     required this.points,
     required this.marks,
+    this.kind = SessionKind.focus,
   });
 
+  final SessionKind kind;
   final Duration elapsed;
   final Duration? planned;
   final FocusReading? reading;
@@ -101,9 +104,13 @@ class SessionController {
   StreamSubscription<FocusReading>? _readingSub;
   Timer? _gapTimer;
   Duration? _planned;
+  SessionKind _kind = SessionKind.focus;
   Duration _elapsed = Duration.zero;
   FocusReading? _lastReading;
   FocusState _lastState = FocusState.unavailable;
+
+  /// The type of the current (or last) session.
+  SessionKind get kind => _kind;
 
   bool get canStart =>
       connection.isConnected &&
@@ -114,11 +121,15 @@ class SessionController {
     _ => true,
   };
 
-  /// Starts a session with an optional planned duration. Returns false
-  /// (and does nothing) when no headband is connected.
-  Future<bool> start({Duration? planned}) async {
+  /// Starts a session of [kind] with an optional planned duration. Returns
+  /// false (and does nothing) when no headband is connected.
+  Future<bool> start({
+    Duration? planned,
+    SessionKind kind = SessionKind.focus,
+  }) async {
     if (!canStart) return false;
     _planned = planned;
+    _kind = kind;
     _elapsed = Duration.zero;
     lastRecord = null;
     calibrationError = null;
@@ -179,6 +190,7 @@ class SessionController {
       startedAt: clock.now(),
       plannedDuration: _planned,
       mode: settings.mode,
+      kind: _kind,
     );
     rawRecordingError.value = null;
     if (_recordRaw?.value ?? false) {
@@ -190,7 +202,7 @@ class SessionController {
       )..start(connection.samples);
     }
     feedback.applySettings(settings);
-    feedback.start();
+    feedback.start(kind: _kind);
     _readingSub = engine.readings.listen(_onReading);
     phase.value = SessionPhase.running;
     _publishLive();
@@ -199,7 +211,13 @@ class SessionController {
   void _onReading(FocusReading reading) {
     if (phase.value != SessionPhase.running) return;
     final settings = _settings.value;
-    final state = classifyFocus(reading.score, settings.threshold);
+    final state = switch (_kind) {
+      SessionKind.focus => classifyFocus(reading.score, settings.threshold),
+      SessionKind.meditation => classifyCalm(
+        reading.score,
+        settings.scoreScale,
+      ),
+    };
     final event = _drops!.update(state, _elapsed);
     feedback.update(score: reading.score, dropActive: _drops!.dropActive);
     _recorder!.record(
@@ -268,6 +286,7 @@ class SessionController {
       state: _lastState,
       points: r?.timeline ?? const [],
       marks: r?.marks ?? const [],
+      kind: _kind,
     );
   }
 

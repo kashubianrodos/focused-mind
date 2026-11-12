@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/services.dart';
 import '../feedback/feedback_settings.dart';
 import '../focus/focus_state.dart';
+import '../focus/session_kind.dart';
 import '../sessions/session_controller.dart';
 import 'contact_view.dart';
 import 'focus_chart.dart';
 import 'focus_scale_gauge.dart';
 import 'format.dart';
 import 'rhythm_charts.dart';
+import 'session_kind_chip.dart';
 
 Color focusStateColor(FocusState s, ColorScheme scheme) => switch (s) {
   FocusState.focused => Colors.green.shade600,
@@ -50,10 +52,15 @@ class LiveSessionView extends ConsumerWidget {
         final state = live?.state ?? FocusState.unavailable;
         final muted = services.feedback.muted;
         final playing = services.feedback.gain.value > 0;
+        final meditation = session.kind == SessionKind.meditation;
+        final score = reading?.score;
+        final shown = score == null ? null : (meditation ? 100 - score : score);
 
         final body = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            SessionKindChip(session.kind),
+            const SizedBox(height: 12),
             ?header,
             if (paused)
               MaterialBanner(
@@ -75,7 +82,7 @@ class LiveSessionView extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      reading?.score?.round().toString() ?? '–',
+                      shown?.round().toString() ?? '–',
                       key: const ValueKey('live-score'),
                       style: text.displayLarge?.copyWith(
                         color: focusStateColor(state, scheme),
@@ -90,7 +97,7 @@ class LiveSessionView extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              state.label,
+                              stateLabel(state, session.kind),
                               key: const ValueKey('live-state'),
                               style: text.titleLarge,
                             ),
@@ -119,7 +126,10 @@ class LiveSessionView extends ConsumerWidget {
               child: FocusChart(
                 points: live?.points ?? const [],
                 marks: live?.marks ?? const [],
-                threshold: settings.threshold,
+                invert: meditation,
+                threshold: meditation
+                    ? 100 - settings.baseline
+                    : settings.threshold,
               ),
             ),
             const SizedBox(height: 12),
@@ -154,7 +164,8 @@ class LiveSessionView extends ConsumerWidget {
                     size: 18,
                   ),
                   label: Text(
-                    '${settings.mode.label} · ${settings.soundscape.label} · '
+                    '${meditation ? 'Meditation' : settings.mode.label} · '
+                    '${settings.soundscape.label} · '
                     '${muted ? 'muted' : (playing ? 'playing' : 'quiet')}',
                   ),
                 ),
@@ -195,6 +206,7 @@ class LiveSessionView extends ConsumerWidget {
               child: FocusScaleGauge(
                 score: reading?.score,
                 scale: settings.scoreScale,
+                mirrored: meditation,
               ),
             ),
           ],

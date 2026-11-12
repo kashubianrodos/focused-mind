@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../feedback/feedback_settings.dart';
 import '../focus/focus_score.dart';
 import '../focus/focus_state.dart';
+import '../focus/session_kind.dart';
 import '../sessions/session_models.dart';
 import 'focus_chart.dart';
 import 'format.dart';
@@ -10,30 +11,82 @@ import 'palette.dart';
 import 'rhythm_charts.dart';
 
 /// End-of-session summary (focus-sessions spec), also used for history.
+///
+/// Meditation sessions (meditation-sessions spec, design D6) show the calm
+/// score and calm wording; the stat card keys stay the focus ones.
 class SummaryView extends StatelessWidget {
-  const SummaryView({super.key, required this.record, required this.threshold});
+  const SummaryView({
+    super.key,
+    required this.record,
+    required this.threshold,
+    this.baseline = ScoreScale.defaultBaseline,
+  });
 
   final SessionRecord record;
+
+  /// Focus threshold, drawn on focus-session charts.
   final double threshold;
+
+  /// Baseline whose calm boundary (100 − baseline) meditation charts draw.
+  final double baseline;
 
   @override
   Widget build(BuildContext context) {
     final s = record.summary;
     final text = Theme.of(context).textTheme;
-    final stats = <(String, String)>[
-      ('Duration', formatMinutes(s.duration)),
+    final meditation = s.kind == SessionKind.meditation;
+    final avg = s.averageScore;
+    // (key, label, value)
+    final stats = <(String, String, String)>[
+      ('Duration', 'Duration', formatMinutes(s.duration)),
+      if (meditation)
+        (
+          'Average focus',
+          'Average calm',
+          avg == null ? '–' : (100 - avg).round().toString(),
+        )
+      else
+        (
+          'Average focus',
+          'Average focus',
+          avg == null ? '–' : avg.round().toString(),
+        ),
       (
-        'Average focus',
-        s.averageScore == null ? '–' : s.averageScore!.round().toString(),
+        'Focused',
+        meditation ? 'Time calm' : 'Focused',
+        formatMinutes(s.timeIn(FocusState.focused)),
       ),
-      ('Focused', formatMinutes(s.timeIn(FocusState.focused))),
-      ('Neutral', formatMinutes(s.timeIn(FocusState.neutral))),
-      ('Distracted', formatMinutes(s.timeIn(FocusState.distracted))),
-      ('Signal unavailable', formatMinutes(s.timeIn(FocusState.unavailable))),
-      ('Focus drops', '${s.drops}'),
-      ('Recoveries', '${s.recoveries}'),
-      ('Longest focused stretch', formatMinutes(s.longestFocused)),
-      ('Feedback mode', s.mode.label),
+      if (!meditation)
+        ('Neutral', 'Neutral', formatMinutes(s.timeIn(FocusState.neutral))),
+      (
+        'Distracted',
+        meditation ? 'Restless' : 'Distracted',
+        formatMinutes(s.timeIn(FocusState.distracted)),
+      ),
+      (
+        'Signal unavailable',
+        'Signal unavailable',
+        formatMinutes(s.timeIn(FocusState.unavailable)),
+      ),
+      (
+        'Focus drops',
+        meditation ? 'Restless episodes' : 'Focus drops',
+        '${s.drops}',
+      ),
+      (
+        'Recoveries',
+        meditation ? 'Calm again' : 'Recoveries',
+        '${s.recoveries}',
+      ),
+      (
+        'Longest focused stretch',
+        meditation ? 'Longest calm stretch' : 'Longest focused stretch',
+        formatMinutes(s.longestFocused),
+      ),
+      if (meditation)
+        ('Feedback mode', 'Sound', 'Plays while calm')
+      else
+        ('Feedback mode', 'Feedback mode', s.mode.label),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,8 +95,8 @@ class SummaryView extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            for (final (label, value) in stats)
-              _StatCard(label: label, value: value, valueKey: 'stat-$label'),
+            for (final (key, label, value) in stats)
+              _StatCard(label: label, value: value, valueKey: 'stat-$key'),
           ],
         ),
         const SizedBox(height: 16),
@@ -52,7 +105,8 @@ class SummaryView extends StatelessWidget {
           child: FocusChart(
             points: record.timeline,
             marks: record.marks,
-            threshold: threshold,
+            invert: meditation,
+            threshold: meditation ? 100 - baseline : threshold,
           ),
         ),
         // Sessions recorded before zones and rhythms existed omit these.
