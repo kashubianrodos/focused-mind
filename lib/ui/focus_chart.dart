@@ -79,6 +79,7 @@ class FocusChart extends StatelessWidget {
               showTitles: true,
               reservedSize: 40,
               interval: 25,
+              getTitlesWidget: valueAxisLabel,
             ),
           ),
           bottomTitles: AxisTitles(
@@ -132,3 +133,20 @@ class FocusChart extends StatelessWidget {
     return 600;
   }
 }
+
+/// A value-axis label that never wraps: "100" with a large system text size
+/// (common on phones) would otherwise break into "10" / "0" in the reserved
+/// width. It shrinks to fit instead.
+Widget valueAxisLabel(double value, TitleMeta meta) => SideTitleWidget(
+  meta: meta,
+  child: FittedBox(
+    fit: BoxFit.scaleDown,
+    child: Text(
+      meta.formattedValue,
+      key: ValueKey('axis-${meta.formattedValue}'),
+      maxLines: 1,
+      softWrap: false,
+      style: const TextStyle(fontSize: 12),
+    ),
+  ),
+);

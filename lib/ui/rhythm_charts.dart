@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../focus/rhythms.dart';
 import '../sessions/session_models.dart';
+import 'focus_chart.dart';
 import 'palette.dart';
 
 /// Current theta/alpha/beta shares as a donut with a legend (brain-rhythms
@@ -145,6 +146,7 @@ class RhythmStackedChart extends StatelessWidget {
               showTitles: true,
               reservedSize: 40,
               interval: 50,
+              getTitlesWidget: valueAxisLabel,
             ),
           ),
           bottomTitles: AxisTitles(
