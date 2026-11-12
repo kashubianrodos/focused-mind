@@ -45,6 +45,11 @@ Choose the mode on the start screen (**Focus | Meditation**). The app
 remembers your last choice, and a label at the top of every session screen
 shows which one is running.
 
+<p align="center">
+  <img src="docs/images/session-modes.jpg" width="280"
+       alt="Start screen with the Focus | Meditation selector set to Meditation, session lengths, electrode contact and the Start session button">
+</p>
+
 **Focus session**: rewards concentration. The scale runs from Deep
 relaxation on the left to Deep concentration on the right. The sound
 follows one of two feedback modes, set in Settings:
