@@ -70,7 +70,9 @@ Download `FocusedMind-<version>.apk` from the same releases page on the
 phone, open it and allow installing from that app when Android asks
 (Android 11 or later). Allow **Nearby devices** on first launch. On the
 first **Connect**, Android asks to pair with the band: accept it. The
-screen stays on while the app is open.
+screen stays on while the app is open. A session keeps running when you
+switch to other apps, with a "Focus session running" notification (allow
+notifications when asked).
 
 Without a release keystore (see [CI and releases](#ci-and-releases)), each
 APK is signed with a different key, so uninstall the old version before
