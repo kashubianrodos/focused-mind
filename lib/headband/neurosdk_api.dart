@@ -39,7 +39,11 @@ abstract final class SensorFamilyCode {
 abstract interface class NeuroSdkApi {
   /// Starts a Bluetooth scan for supported headbands. Throws
   /// [BluetoothUnavailableException] when Bluetooth cannot be used.
-  void startScan();
+  ///
+  /// Asynchronous because the SDK must create its scanner off the main
+  /// thread: on iOS it waits for CoreBluetooth, whose callbacks (and the
+  /// permission prompt) need the main thread free.
+  Future<void> startScan();
 
   /// Devices found since [startScan].
   List<DeviceInfo> scannedDevices();
