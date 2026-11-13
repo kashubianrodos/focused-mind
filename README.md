@@ -126,28 +126,23 @@ deletes its recording.
 
 ## Install
 
-Download `FocusedMind-<version>.dmg` from the
-[releases](https://github.com/kashubianrodos/focused-mind/releases) and
-drag **Focused Mind** into **Applications**.
+Each [release](https://github.com/kashubianrodos/focused-mind/releases)
+has the Android app (`FocusedMind-<version>.apk`) and an unsigned iPhone
+app (`FocusedMind-<version>-unsigned.ipa`); the iPhone app is also
+uploaded to TestFlight. Android and iPhone builds of a release carry the
+same version and build number.
 
-Release builds are not signed with an Apple Developer ID yet, so macOS
-blocks the first launch ("Apple could not verify…"). Right-click › Open no
-longer gets past this on macOS 15 and later. To open it:
+### Mac
 
-1. Double-click **Focused Mind**, and click **Done** on the warning.
-2. Open **System Settings › Privacy & Security** and scroll down to the
-   message that Focused Mind was blocked.
-3. Click **Open Anyway** and confirm with your password or Touch ID.
-
-You only need to do this once per downloaded version. On first scan, also
+There is no ready-made Mac download. Build and run it from source (see
+[Requirements](#requirements) and [Run](#run)), or make a release build
+with `flutter build macos --release`, which writes
+`build/macos/Build/Products/Release/focused_mind.app`. On first scan,
 allow Bluetooth access when macOS asks.
-
-Alternatively, clear the download flag in Terminal:
-`xattr -dr com.apple.quarantine "/Applications/Focused Mind.app"`.
 
 ### Android
 
-Download `FocusedMind-<version>.apk` from the same releases page on the
+Download `FocusedMind-<version>.apk` from the releases page on the
 phone, open it and allow installing from that app when Android asks
 (Android 11 or later). Allow **Nearby devices** on first launch. On the
 first **Connect**, Android asks to pair with the band: accept it. The
@@ -251,9 +246,9 @@ every push and pull request, packages it as
 the release on `v` tags.
 
 Its `testflight` job signs the app and uploads it to TestFlight on `v`
-tags and when started by hand (**Actions › iOS › Run workflow**). The
-version comes from the tag without any `-beta` suffix, and the build
-number is the run number. One-time setup:
+tags and when started by hand (**Actions › iOS › Run workflow**), with
+the version and build number described in
+[Releases and versions](#releases-and-versions). One-time setup:
 
 1. In [App Store Connect](https://appstoreconnect.apple.com), **Apps › +
    › New App**, iOS, bundle ID `com.kashubianrodos.focusedMind` (register
@@ -278,38 +273,34 @@ number is the run number. One-time setup:
 After processing (a few minutes), the build appears under **TestFlight**
 in App Store Connect; add yourself as an internal tester to install it.
 
-`.github/workflows/macos.yml` runs on GitHub's macOS runners:
+`.github/workflows/test.yml` runs `flutter analyze` and `flutter test` on
+every push to `main` and every pull request, on a macOS runner because the
+host tests load BrainBit's macOS library.
 
-- **Every push to `main` and every pull request:** `flutter analyze` and
-  `flutter test`, then a release build packaged as a DMG. The DMG is
-  attached to the run as an artifact.
-- **A tag starting with `v`** (for example `git tag v0.1.0 && git push
-  origin v0.1.0`) also publishes a GitHub release with
-  `FocusedMind-<version>.dmg`. The version comes from the tag. Tags with a
-  `-`, such as `v0.2.0-beta.1`, are marked as pre-releases.
+### Releases and versions
 
-Without signing secrets the app keeps an ad-hoc signature, and users have
-to allow the first launch under System Settings › Privacy & Security (see
-[Install](#install)). To ship a signed and notarized DMG that opens without
-a warning:
+The version lives in `pubspec.yaml` (`version: 0.3.0+1`); the part after
+`+` is only used for local builds. `tool/ci_version.sh` gives the Android
+and iOS workflows the same version and build number:
 
-1. Join the Apple Developer Program.
-2. Create a **Developer ID Application** certificate (Xcode › Settings ›
-   Accounts › Manage Certificates), then export it with its private key
-   from Keychain Access as a password-protected `.p12`.
-3. Create an app-specific password for your Apple ID at appleid.apple.com.
-4. Add these repository secrets, for example with
-   `gh secret set MACOS_CERTIFICATE_P12 < <(base64 -i cert.p12)`:
+- **Version:** from the tag on tag builds, otherwise from `pubspec.yaml`.
+  The tag must match `pubspec.yaml`, or the build fails.
+- **App version:** the version without a pre-release suffix
+  (`0.3.0-beta.1` ships as `0.3.0`), because iOS accepts numbers only.
+- **Build number:** the number of commits, the same on both platforms and
+  rising with every commit, so new Android builds install over old ones and
+  each TestFlight upload is unique.
 
-| Secret | What |
-|---|---|
-| `MACOS_CERTIFICATE_P12` | Developer ID Application certificate and key, exported as .p12, base64-encoded (`base64 -i cert.p12 \| pbcopy`) |
-| `MACOS_CERTIFICATE_PASSWORD` | Password of that .p12 |
-| `MACOS_SIGNING_IDENTITY` | e.g. `Developer ID Application: Your Name (TEAMID)` |
-| `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_SPECIFIC_PASSWORD` | For notarization (`notarytool`); app-specific password from appleid.apple.com |
+To release, set the new version in `pubspec.yaml`, commit, then tag and
+push:
 
-Then push a new `v` tag. CI signs BrainBit's libraries and the app with the
-hardened runtime, notarizes the DMG and staples the ticket.
+```sh
+git tag v0.3.0 && git push origin v0.3.0
+```
+
+The tag builds the APK and the unsigned IPA, publishes both in a GitHub
+release with generated notes, and uploads the signed build to TestFlight.
+Tags with a `-`, such as `v0.3.0-beta.1`, are marked as pre-releases.
 
 ## Headband
 

@@ -2,7 +2,8 @@ name: iOS
 
 # Builds an unsigned iPhone app on every push and pull request; a `v*` tag
 # (e.g. v0.2.0) also attaches it to the GitHub release. Tests run in the
-# macOS workflow.
+# Test workflow; versions come from tool/ci_version.sh, shared with the
+# Android workflow.
 #
 # The `testflight` job signs the app and uploads it to TestFlight on `v*`
 # tags and on a manual run (Actions › iOS › Run workflow). It needs the
@@ -32,6 +33,8 @@ jobs:
       contents: write # create the release on tags
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history for the build number
 
       - uses: subosito/flutter-action@v2
         with:
@@ -41,41 +44,34 @@ jobs:
 
       - name: Version
         id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="$(grep '^version:' pubspec.yaml | sed -E 's/version: *([^+]+).*/\1/')"
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "ipa=FocusedMind-$VERSION-unsigned.ipa" >> "$GITHUB_OUTPUT"
+        run: ./tool/ci_version.sh
 
       - run: flutter pub get
 
       - name: Build app
         run: |
           flutter build ios --release --no-codesign \
-            --build-name "${{ steps.version.outputs.version }}" \
-            --build-number "${{ github.run_number }}"
+            --build-name "${{ steps.version.outputs.name }}" \
+            --build-number "${{ steps.version.outputs.build }}"
 
       # An .ipa is a zip with the app under Payload/.
       - name: Package IPA
         run: |
           mkdir -p Payload
           cp -R build/ios/iphoneos/Runner.app Payload/
-          zip -qry "${{ steps.version.outputs.ipa }}" Payload
+          zip -qry "FocusedMind-${{ steps.version.outputs.version }}-unsigned.ipa" Payload
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.version.outputs.ipa }}
-          path: ${{ steps.version.outputs.ipa }}
+          name: FocusedMind-${{ steps.version.outputs.version }}-unsigned.ipa
+          path: FocusedMind-${{ steps.version.outputs.version }}-unsigned.ipa
           if-no-files-found: error
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
-          files: ${{ steps.version.outputs.ipa }}
+          files: FocusedMind-${{ steps.version.outputs.version }}-unsigned.ipa
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
 
@@ -104,6 +100,8 @@ jobs:
           fi
 
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history for the build number
 
       - uses: subosito/flutter-action@v2
         with:
@@ -113,14 +111,7 @@ jobs:
 
       - name: Version
         id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="$(grep '^version:' pubspec.yaml | sed -E 's/version: *([^+]+).*/\1/')"
-          fi
-          # App Store versions are numbers only: 0.2.0-beta.1 uploads as 0.2.0.
-          echo "version=${VERSION%%-*}" >> "$GITHUB_OUTPUT"
+        run: ./tool/ci_version.sh
 
       # The Apple Development certificate signs the archive; App Store
       # Connect manages the distribution certificate and profiles through
@@ -147,8 +138,8 @@ jobs:
       - name: Archive
         run: |
           flutter build ios --release --config-only \
-            --build-name "${{ steps.version.outputs.version }}" \
-            --build-number "${{ github.run_number }}"
+            --build-name "${{ steps.version.outputs.name }}" \
+            --build-number "${{ steps.version.outputs.build }}"
           xcodebuild archive \
             -workspace ios/Runner.xcworkspace -scheme Runner \
             -configuration Release -destination 'generic/platform=iOS' \
@@ -171,7 +162,7 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
-          echo "Uploaded ${{ steps.version.outputs.version }} (${{ github.run_number }}) to TestFlight." >> "$GITHUB_STEP_SUMMARY"
+          echo "Uploaded ${{ steps.version.outputs.name }} (${{ steps.version.outputs.build }}) to TestFlight." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove signing files
         if: always()

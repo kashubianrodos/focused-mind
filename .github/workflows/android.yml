@@ -1,7 +1,8 @@
 name: Android
 
 # Builds the APK on every push and pull request; a `v*` tag (e.g. v0.2.0)
-# also attaches it to the GitHub release. Tests run in the macOS workflow.
+# also attaches it to the GitHub release. Tests run in the Test workflow; versions
+# come from tool/ci_version.sh, shared with the iOS workflow.
 on:
   push:
     branches: [main]
@@ -27,6 +28,8 @@ jobs:
       contents: write # create the release on tags
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history for the build number
 
       - uses: actions/setup-java@v5
         with:
@@ -41,14 +44,7 @@ jobs:
 
       - name: Version
         id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="$(grep '^version:' pubspec.yaml | sed -E 's/version: *([^+]+).*/\1/')"
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "apk=FocusedMind-$VERSION.apk" >> "$GITHUB_OUTPUT"
+        run: ./tool/ci_version.sh
 
       # Optional release keystore. Without it the APK is signed with a
       # throwaway debug key, so installing a newer build means uninstalling
@@ -73,20 +69,20 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           flutter build apk --release \
-            --build-name "${{ steps.version.outputs.version }}" \
-            --build-number "${{ github.run_number }}"
-          mv build/app/outputs/flutter-apk/app-release.apk "${{ steps.version.outputs.apk }}"
+            --build-name "${{ steps.version.outputs.name }}" \
+            --build-number "${{ steps.version.outputs.build }}"
+          mv build/app/outputs/flutter-apk/app-release.apk "FocusedMind-${{ steps.version.outputs.version }}.apk"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.version.outputs.apk }}
-          path: ${{ steps.version.outputs.apk }}
+          name: FocusedMind-${{ steps.version.outputs.version }}.apk
+          path: FocusedMind-${{ steps.version.outputs.version }}.apk
           if-no-files-found: error
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
-          files: ${{ steps.version.outputs.apk }}
+          files: FocusedMind-${{ steps.version.outputs.version }}.apk
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
