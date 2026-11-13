@@ -171,8 +171,9 @@ feedback sounds play with the silent switch on and mix with your music.
 It needs a real iPhone: BrainBit's EmotionalMath framework ships no simulator
 slice, and the simulator has no Bluetooth anyway.
 
-There is no App Store or TestFlight build yet. To install it on your own
-iPhone with a free Apple ID:
+Tagged releases are uploaded to TestFlight by CI (see
+[CI and releases](#ci-and-releases)); testers install them with Apple's
+TestFlight app. To install it from source on your own iPhone:
 
 1. In Xcode, **Settings › Accounts**, add your Apple ID.
 2. `open ios/Runner.xcworkspace`, select the **Runner** target ›
@@ -186,8 +187,8 @@ iPhone with a free Apple ID:
    Device Management**, then open Focused Mind and allow Bluetooth.
 
 Apps signed with a free Personal Team expire after 7 days; run step 4 again
-to renew. A paid Apple Developer account removes that limit and allows
-TestFlight.
+to renew. With a paid Apple Developer account pick that team in step 2;
+the app then stays installed for a year.
 
 To build without signing (for example to re-sign with another tool):
 `flutter build ios --release --no-codesign` writes
@@ -247,9 +248,35 @@ Keep the keystore safe: an app signed with a lost key can't be updated.
 `.github/workflows/ios.yml` builds the iPhone app without code signing on
 every push and pull request, packages it as
 `FocusedMind-<version>-unsigned.ipa` (a run artifact), and attaches it to
-the release on `v` tags. It is unsigned because CI has no Apple
-certificate; re-sign it with your Apple ID to install it, or build from
-source (see [iPhone](#iphone)).
+the release on `v` tags.
+
+Its `testflight` job signs the app and uploads it to TestFlight on `v`
+tags and when started by hand (**Actions › iOS › Run workflow**). The
+version comes from the tag without any `-beta` suffix, and the build
+number is the run number. One-time setup:
+
+1. In [App Store Connect](https://appstoreconnect.apple.com), **Apps › +
+   › New App**, iOS, bundle ID `com.kashubianrodos.focusedMind` (register
+   it under **Certificates, Identifiers & Profiles › Identifiers** first if
+   it is not listed).
+2. **Users and Access › Integrations › App Store Connect API › Team Keys**,
+   generate a key with the **Admin** role (needed for Apple to create the
+   distribution certificate) and download the `.p8` file. Note its key ID
+   and the issuer ID.
+3. In Keychain Access, export your *Apple Development* certificate with
+   its private key as a `.p12` with a password.
+4. Add the repository secrets:
+
+| Secret | What |
+|---|---|
+| `APPLE_TEAM_ID` | Your team ID (Membership details on developer.apple.com) |
+| `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID` | The API key's ID and the issuer ID |
+| `APP_STORE_CONNECT_KEY_P8` | The `.p8` file's contents (`gh secret set APP_STORE_CONNECT_KEY_P8 < AuthKey_XXXX.p8`) |
+| `IOS_SIGNING_P12_BASE64` | The `.p12`, base64-encoded (`base64 -i dev.p12 \| gh secret set IOS_SIGNING_P12_BASE64`) |
+| `IOS_SIGNING_P12_PASSWORD` | Its password |
+
+After processing (a few minutes), the build appears under **TestFlight**
+in App Store Connect; add yourself as an internal tester to install it.
 
 `.github/workflows/macos.yml` runs on GitHub's macOS runners:
 

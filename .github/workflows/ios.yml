@@ -4,10 +4,9 @@ name: iOS
 # (e.g. v0.2.0) also attaches it to the GitHub release. Tests run in the
 # macOS workflow.
 #
-# The .ipa is not signed: CI has no Apple certificate, and a free Personal
-# Team can only sign on the developer's own Mac. Install it with a tool that
-# re-signs with your Apple ID (for example Sideloadly or AltStore), or build
-# from source as described in README "iPhone".
+# The `testflight` job signs the app and uploads it to TestFlight on `v*`
+# tags and on a manual run (Actions › iOS › Run workflow). It needs the
+# Apple secrets listed in README "CI and releases".
 on:
   push:
     branches: [main]
@@ -79,3 +78,103 @@ jobs:
           files: ${{ steps.version.outputs.ipa }}
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
+
+  testflight:
+    name: Upload to TestFlight
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    # App Store Connect only accepts builds made with the iOS 26 SDK (Xcode 26).
+    runs-on: macos-26
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+      SIGNING_P12: ${{ secrets.IOS_SIGNING_P12_BASE64 }}
+      SIGNING_P12_PASSWORD: ${{ secrets.IOS_SIGNING_P12_PASSWORD }}
+    steps:
+      - name: Check secrets
+        run: |
+          missing=()
+          for name in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 SIGNING_P12 SIGNING_P12_PASSWORD; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if (( ${#missing[@]} )); then
+            echo "::error::Missing secrets for TestFlight: ${missing[*]} (see README \"CI and releases\")"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(grep '^version:' pubspec.yaml | sed -E 's/version: *([^+]+).*/\1/')"
+          fi
+          # App Store versions are numbers only: 0.2.0-beta.1 uploads as 0.2.0.
+          echo "version=${VERSION%%-*}" >> "$GITHUB_OUTPUT"
+
+      # The Apple Development certificate signs the archive; App Store
+      # Connect manages the distribution certificate and profiles through
+      # the API key.
+      - name: Install signing certificate and API key
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$SIGNING_P12" | base64 --decode > "$RUNNER_TEMP/signing.p12"
+          security import "$RUNNER_TEMP/signing.p12" -P "$SIGNING_P12_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" \
+            $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/signing.p12"
+          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+
+      - run: flutter pub get
+
+      - name: Archive
+        run: |
+          flutter build ios --release --config-only \
+            --build-name "${{ steps.version.outputs.version }}" \
+            --build-number "${{ github.run_number }}"
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace -scheme Runner \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Export and upload to TestFlight
+        run: |
+          cp ios/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
+          plutil -insert teamID -string "$APPLE_TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "Uploaded ${{ steps.version.outputs.version }} (${{ github.run_number }}) to TestFlight." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing files
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
+          rm -f "$RUNNER_TEMP/AuthKey.p8"
