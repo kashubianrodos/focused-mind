@@ -24,17 +24,21 @@ extension FeedbackModeText on FeedbackMode {
   };
 }
 
-enum Soundscape { birds, ocean }
+enum Soundscape { birds, ocean, forest }
 
 extension SoundscapeInfo on Soundscape {
   String get label => switch (this) {
     Soundscape.birds => 'Birds chirping',
     Soundscape.ocean => 'Ocean waves',
+    Soundscape.forest => 'Forest',
   };
 
-  String get asset => switch (this) {
-    Soundscape.birds => 'assets/sounds/birds.m4a',
-    Soundscape.ocean => 'assets/sounds/ocean.m4a',
+  /// The stereo file, or with [mono] the same signal in both ears.
+  String assetFor({required bool mono}) => switch (this) {
+    Soundscape.birds => 'assets/sounds/birds${mono ? '_mono' : ''}.m4a',
+    Soundscape.ocean => 'assets/sounds/ocean${mono ? '_mono' : ''}.m4a',
+    // The forest field recording is mono already.
+    Soundscape.forest => 'assets/sounds/forest.m4a',
   };
 }
 
@@ -44,6 +48,7 @@ class FeedbackSettings {
   const FeedbackSettings({
     this.mode = FeedbackMode.alert,
     this.soundscape = Soundscape.birds,
+    this.mono = false,
     this.volume = 0.7,
     this.threshold = 40,
     this.baseline = ScoreScale.defaultBaseline,
@@ -55,6 +60,9 @@ class FeedbackSettings {
 
   final FeedbackMode mode;
   final Soundscape soundscape;
+
+  /// Play soundscapes in mono (same sound in both ears) instead of stereo.
+  final bool mono;
 
   /// Maximum feedback loudness, 0–1.
   final double volume;
@@ -71,6 +79,7 @@ class FeedbackSettings {
   FeedbackSettings copyWith({
     FeedbackMode? mode,
     Soundscape? soundscape,
+    bool? mono,
     double? volume,
     double? threshold,
     double? baseline,
@@ -78,6 +87,7 @@ class FeedbackSettings {
   }) => FeedbackSettings(
     mode: mode ?? this.mode,
     soundscape: soundscape ?? this.soundscape,
+    mono: mono ?? this.mono,
     volume: (volume ?? this.volume).clamp(0.0, 1.0),
     threshold: (threshold ?? this.threshold).clamp(0.0, 100.0),
     baseline: (baseline ?? this.baseline).clamp(
@@ -94,6 +104,7 @@ class FeedbackSettings {
   Map<String, Object> toJson() => {
     'mode': mode.name,
     'soundscape': soundscape.name,
+    'mono': mono,
     'volume': volume,
     'threshold': threshold,
     'baseline': baseline,
@@ -109,6 +120,7 @@ class FeedbackSettings {
       soundscape: Soundscape.values
           .where((s) => s.name == json['soundscape'])
           .firstOrNull,
+      mono: json['mono'] is bool ? json['mono']! as bool : null,
       volume: (json['volume'] as num?)?.toDouble(),
       threshold: (json['threshold'] as num?)?.toDouble(),
       baseline: (json['baseline'] as num?)?.toDouble(),
@@ -123,12 +135,20 @@ class FeedbackSettings {
       other is FeedbackSettings &&
       other.mode == mode &&
       other.soundscape == soundscape &&
+      other.mono == mono &&
       other.volume == volume &&
       other.threshold == threshold &&
       other.baseline == baseline &&
       other.triggerDelay == triggerDelay;
 
   @override
-  int get hashCode =>
-      Object.hash(mode, soundscape, volume, threshold, baseline, triggerDelay);
+  int get hashCode => Object.hash(
+    mode,
+    soundscape,
+    mono,
+    volume,
+    threshold,
+    baseline,
+    triggerDelay,
+  );
 }

@@ -5,8 +5,14 @@ Produces seamless loops (the end flows into the start) so just_audio can loop
 them without a gap, plus a short end-of-session chime. Because the audio is
 synthesized here, it carries no third-party license.
 
-Usage: python3 tool/generate_sounds.py   (needs numpy and macOS afconvert)
+Also writes mono variants of the stereo loops and, given the source MP3,
+the forest field recording (see assets/sounds/LICENSES.md).
+
+Usage: python3 tool/generate_sounds.py [path/to/forest.mp3]
+       (needs numpy and macOS afconvert)
 """
+
+import sys
 
 import os
 import subprocess
@@ -107,25 +113,55 @@ def chime(seconds=3.5):
     return np.stack([mono, mono], axis=1)
 
 
-def write_m4a(name, audio):
+def to_mono(stereo):
+    """L+R average, renormalized to the stereo peak."""
+    mono = stereo.mean(axis=1)
+    return mono * np.max(np.abs(stereo)) / np.max(np.abs(mono))
+
+
+def forest(mp3_path, fade_seconds=3):
+    """The field recording as a seamless loop: its last few seconds are
+    equal-power crossfaded into its first few, then dropped."""
+    with tempfile.TemporaryDirectory() as tmp:
+        wav_path = os.path.join(tmp, "forest.wav")
+        subprocess.run(
+            ["afconvert", "-f", "WAVE", "-d", f"LEI16@{RATE}", "-c", "1", mp3_path, wav_path],
+            check=True,
+        )
+        with wave.open(wav_path) as w:
+            x = np.frombuffer(w.readframes(w.getnframes()), "<i2") / 32768
+    f = int(fade_seconds * RATE)
+    ramp = np.linspace(0, np.pi / 2, f)
+    head = x[:f] * np.sin(ramp) + x[-f:] * np.cos(ramp)
+    loop = np.concatenate([head, x[f:-f]])
+    return 0.6 * loop / np.max(np.abs(loop))
+
+
+def write_m4a(name, audio, bitrate=160000):
     os.makedirs(OUT, exist_ok=True)
     pcm = (np.clip(audio, -1, 1) * 32767).astype("<i2")
     with tempfile.TemporaryDirectory() as tmp:
         wav_path = os.path.join(tmp, name + ".wav")
         with wave.open(wav_path, "wb") as w:
-            w.setnchannels(2)
+            w.setnchannels(1 if audio.ndim == 1 else 2)
             w.setsampwidth(2)
             w.setframerate(RATE)
             w.writeframes(pcm.tobytes())
         target = os.path.join(OUT, name + ".m4a")
         subprocess.run(
-            ["afconvert", "-f", "m4af", "-d", "aac", "-b", "160000", wav_path, target],
+            ["afconvert", "-f", "m4af", "-d", "aac", "-b", str(bitrate), wav_path, target],
             check=True,
         )
     print("wrote", os.path.normpath(target))
 
 
 if __name__ == "__main__":
-    write_m4a("ocean", ocean())
-    write_m4a("birds", birds())
+    sea, song = ocean(), birds()
+    write_m4a("ocean", sea)
+    write_m4a("birds", song)
     write_m4a("end_chime", chime())
+    # Mono files play the same signal in both ears.
+    write_m4a("ocean_mono", to_mono(sea), 80000)
+    write_m4a("birds_mono", to_mono(song), 80000)
+    if len(sys.argv) > 1:
+        write_m4a("forest", forest(sys.argv[1]), 64000)

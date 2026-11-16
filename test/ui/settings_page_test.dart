@@ -69,6 +69,7 @@ void main() {
     await openSettings(tester);
     final toggle = find.byKey(const ValueKey('record-raw'));
     await tester.ensureVisible(toggle);
+    await tester.pump();
     expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
     expect(find.textContaining('about 20 MB per hour'), findsOneWidget);
     await tester.tap(toggle);
@@ -86,6 +87,54 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('preview-ocean')));
     await tester.pump();
     expect(h.audio.previews, [Soundscape.ocean]);
+    await shutDown(tester, h);
+  });
+
+  testWidgets('forest is listed and previewable', (tester) async {
+    final h = await pumpApp(tester);
+    await openSettings(tester);
+    await tester.tap(find.text('Forest'));
+    await tester.pump();
+    expect(h.services.settings.value.soundscape, Soundscape.forest);
+    await tester.tap(find.byKey(const ValueKey('preview-forest')));
+    await tester.pump();
+    expect(h.audio.previews, [Soundscape.forest]);
+    await shutDown(tester, h);
+  });
+
+  testWidgets('mono switch saves the setting and previews follow it', (
+    tester,
+  ) async {
+    final h = await pumpApp(tester);
+    await openSettings(tester);
+    final toggle = find.byKey(const ValueKey('mono'));
+    await tester.ensureVisible(toggle);
+    await tester.pump();
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+    await tester.tap(toggle);
+    await tester.pump();
+    expect(h.services.settings.value.mono, isTrue);
+    expect(h.services.settingsRepository.loadFeedback().mono, isTrue);
+    final preview = find.byKey(const ValueKey('preview-birds'));
+    await tester.ensureVisible(preview);
+    await tester.pump();
+    await tester.tap(preview);
+    await tester.pump();
+    expect(h.audio.previewMono, [true]);
+    await shutDown(tester, h);
+  });
+
+  testWidgets('licenses button opens the license page', (tester) async {
+    final h = await pumpApp(tester);
+    await openSettings(tester);
+    final button = find.byKey(const ValueKey('licenses'));
+    await tester.scrollUntilVisible(button, 300);
+    // Scroll to the very end so the button sits fully inside the window.
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pump();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(find.byType(LicensePage), findsOneWidget);
     await shutDown(tester, h);
   });
 

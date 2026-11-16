@@ -52,7 +52,7 @@ class FeedbackController {
     _dropActive = false;
     _lastScore = null;
     _unavailableFor = Duration.zero;
-    await audio.load(_settings.soundscape);
+    await audio.load(_settings.soundscape, mono: _settings.mono);
     _retarget();
   }
 
@@ -81,11 +81,13 @@ class FeedbackController {
 
   /// Applies new settings immediately (mode, volume, threshold, sound).
   Future<void> applySettings(FeedbackSettings settings) async {
-    final soundChanged = settings.soundscape != _settings.soundscape;
+    final soundChanged =
+        settings.soundscape != _settings.soundscape ||
+        settings.mono != _settings.mono;
     _settings = settings;
     if (soundChanged && _active) {
       final wasPlaying = _playing;
-      await audio.load(settings.soundscape);
+      await audio.load(settings.soundscape, mono: settings.mono);
       if (wasPlaying) await audio.play();
     }
     _retarget();

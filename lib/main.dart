@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,15 @@ import 'app/services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  LicenseRegistry.addLicense(() async* {
+    yield const LicenseEntryWithLineBreaks(
+      ['Forest soundscape'],
+      '"Daytime Wind with Birds and Forest Grass" by Eryliaa, from Pixabay '
+      '(https://pixabay.com/sound-effects/nature-daytime-wind-with-birds-and-forest-grass-451152/). '
+      'Used under the Pixabay Content License '
+      '(https://pixabay.com/service/license-summary/).',
+    );
+  });
   final services = await AppServices.create();
   if (Platform.isMacOS) {
     await MenuBarController(
