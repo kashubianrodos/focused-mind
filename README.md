@@ -1,16 +1,72 @@
 # Focused Mind
 
-A macOS and Android app that helps you stay focused while you work. It reads EEG from a
-BrainBit-family headband (developed against the **Mindo** band), estimates
-your focus in real time and plays a soundscape (birds or ocean) as feedback:
+A macOS, Android and iPhone app that reads EEG from a BrainBit-family
+headband (developed against the **Mindo** band), estimates in real time how
+focused or calm you are, and guides you with a soundscape (birds or ocean).
 
-- **Alert** mode (default): quiet while you are focused; the sound fades in
-  when your focus drops and fades out when you are back.
-- **Continuous** mode: the sound plays while you are focused, louder the more
+<table align="center">
+  <tr>
+    <th>Focus session</th>
+    <th>Meditation session</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/focus-session.jpg" width="280"
+         alt="Focus session: focus score 79, Focused, rhythm pie, focus graph and the scale gauge in Concentration"></td>
+    <td><img src="docs/images/meditation-session.jpg" width="280"
+         alt="Meditation session: calm score 82, Calm, rhythm pie, calm graph and the mirrored scale gauge in Relaxation"></td>
+  </tr>
+</table>
+
+## Features
+
+- **Live score** every second: the focus score (or the calm score in a
+  meditation session) with its state, elapsed and remaining time, and a
+  graph of the whole session.
+- **Relaxation–concentration scale**: a gauge with four zones (Deep
+  relaxation, Relaxation, Concentration, Deep concentration) centred on your
+  own calibrated level, with an adjustable baseline.
+- **Brain rhythms**: theta, alpha and beta shares as a pie and as a stacked
+  chart over time.
+- **Sound feedback** with birds or ocean, a trigger delay, volume and a mute
+  button.
+- **Sessions** of 25, 50 or 90 minutes or open-ended, with a short signal
+  check and calibration first. If the headband drops out briefly, the
+  session pauses and resumes.
+- **Summary and history**: time per state and per zone, drops or restless
+  episodes, the longest focused or calm stretch, and average rhythms.
+- **CSV export** of any session, plus an optional recording of the raw EEG.
+- **Menu bar indicator** on macOS. On phones, sessions keep running in the
+  background.
+- **Private**: everything stays on your device.
+
+## Session modes
+
+Choose the mode on the start screen (**Focus | Meditation**). The app
+remembers your last choice, and a label at the top of every session screen
+shows which one is running.
+
+<p align="center">
+  <img src="docs/images/session-modes.jpg" width="280"
+       alt="Start screen with the Focus | Meditation selector set to Meditation, session lengths, electrode contact and the Start session button">
+</p>
+
+**Focus session**: rewards concentration. The scale runs from Deep
+relaxation on the left to Deep concentration on the right. The sound
+follows one of two feedback modes, set in Settings:
+
+- **Alert** (default): quiet while you are focused. The sound fades in when
+  your focus drops and fades out when you are back.
+- **Continuous**: the sound plays while you are focused, louder the more
   focused you are, and goes quiet when your focus drops.
 
-Sessions (25/50/90 minutes or open-ended) show a live focus graph, a menu bar
-indicator, an end-of-session summary and a local history.
+**Meditation session**: rewards a calm, relaxed state. The score is turned
+around: the calm score is 100 − the focus score, and the state is **Calm** or
+**Restless**. The scale is mirrored, so the needle moves right as you relax.
+The soundscape plays the whole time you are calm, louder the deeper you
+relax, and goes silent while you are concentrating (see
+[Meditation sessions](#meditation-sessions)).
+
+## In detail
 
 During a session the live view also shows, as in BrainBit's EEGWaves app:
 
@@ -26,47 +82,67 @@ During a session the live view also shows, as in BrainBit's EEGWaves app:
 The summary adds time per scale zone, average rhythm shares and the rhythm
 chart. Sessions recorded before these existed still open without them.
 
+### Meditation sessions
+
+The start screen has a **Focus | Meditation** selector next to the session
+length; it remembers the last type you used. A label at the top of every
+session screen (and in History) says which type is running. A meditation
+session uses the same headband, calibration, rhythms and history, but its
+goal is the calm end of the scale:
+
+- **Calm score**: the big number and the graph show 100 − the focus score,
+  so higher is calmer. You are **Calm** in Relaxation or Deep relaxation and
+  **Restless** in Concentration or Deep concentration. The boundary is your
+  calibrated level (the baseline); the focus threshold isn't used.
+- **Mirrored scale**: the gauge runs Deep concentration → Deep relaxation
+  from left to right, so the needle moves right as you calm down.
+- **Sound**: the soundscape plays the whole time you are calm, louder the
+  deeper you relax (full volume in Deep relaxation). After the trigger
+  delay in Concentration or above it fades out, and it comes back once you
+  are calm again. The Alert/Continuous setting applies only to focus
+  sessions.
+- **Summary**: time calm, longest calm stretch and restless episodes take
+  the place of time focused, longest focus and focus drops.
+
 ### Export
 
 In **History**, the share button on a session (or **Export** in its detail
 view) asks for a folder (on Android it saves to **Downloads › Focused
 Mind** instead) and writes `focused-mind_<date>_<time>.csv`. That
 file has one row per second: time, focus score, state, scale zone, theta,
-alpha and beta %, gaps, feedback mode, and drop/recovery marks. Existing
-files are never overwritten (`_2`, `_3`, … is appended).
+alpha and beta %, gaps, feedback mode, drop/recovery marks and the session
+type (`focus` or `meditation`). The focus score is the raw score in both
+types; in meditation sessions the state is `calm` or `restless`. Existing
+files are never overwritten (`_2`, `_3`, … is appended). On iPhone there is
+no folder picker: exports go to **Files › On My iPhone › Focused Mind**.
 
 **Settings › Data › Record raw signal** (off by default) also keeps the full
 250 Hz O1/O2/T3/T4 EEG of each new session, about 20 MB per hour. Export
 then writes a second file, `…_raw.csv`, in microvolts. Deleting a session
-deletes its recording. iPhone is planned on the same Flutter codebase.
+deletes its recording.
 
 > The focus score is an estimate for personal, wellness use only. Focused
 > Mind is not a medical device. All data stays on your device.
 
 ## Install
 
-Download `FocusedMind-<version>.dmg` from the
-[releases](https://github.com/kashubianrodos/focused-mind/releases) and
-drag **Focused Mind** into **Applications**.
+Each [release](https://github.com/kashubianrodos/focused-mind/releases)
+has the Android app (`FocusedMind-<version>.apk`) and an unsigned iPhone
+app (`FocusedMind-<version>-unsigned.ipa`); the iPhone app is also
+uploaded to TestFlight. Android and iPhone builds of a release carry the
+same version and build number.
 
-Release builds are not signed with an Apple Developer ID yet, so macOS
-blocks the first launch ("Apple could not verify…"). Right-click › Open no
-longer gets past this on macOS 15 and later. To open it:
+### Mac
 
-1. Double-click **Focused Mind**, and click **Done** on the warning.
-2. Open **System Settings › Privacy & Security** and scroll down to the
-   message that Focused Mind was blocked.
-3. Click **Open Anyway** and confirm with your password or Touch ID.
-
-You only need to do this once per downloaded version. On first scan, also
+There is no ready-made Mac download. Build and run it from source (see
+[Requirements](#requirements) and [Run](#run)), or make a release build
+with `flutter build macos --release`, which writes
+`build/macos/Build/Products/Release/focused_mind.app`. On first scan,
 allow Bluetooth access when macOS asks.
-
-Alternatively, clear the download flag in Terminal:
-`xattr -dr com.apple.quarantine "/Applications/Focused Mind.app"`.
 
 ### Android
 
-Download `FocusedMind-<version>.apk` from the same releases page on the
+Download `FocusedMind-<version>.apk` from the releases page on the
 phone, open it and allow installing from that app when Android asks
 (Android 11 or later). Allow **Nearby devices** on first launch. On the
 first **Connect**, Android asks to pair with the band: accept it. The
@@ -79,9 +155,48 @@ APK is signed with a different key, so uninstall the old version before
 installing a new one. Uninstalling deletes the session history; export
 sessions first.
 
+### iPhone
+
+The app runs on iPhone (iOS 15 or later; developed for iPhone 15) with the
+same features as on the Mac, except the menu bar indicator. Navigation moves
+to a bottom bar on a phone, and the session keeps running with the screen
+locked: the app declares Bluetooth and audio background modes, and the
+feedback sounds play with the silent switch on and mix with your music.
+
+It needs a real iPhone: BrainBit's EmotionalMath framework ships no simulator
+slice, and the simulator has no Bluetooth anyway.
+
+Tagged releases are uploaded to TestFlight by CI (see
+[CI and releases](#ci-and-releases)); testers install them with Apple's
+TestFlight app. To install it from source on your own iPhone:
+
+1. In Xcode, **Settings › Accounts**, add your Apple ID.
+2. `open ios/Runner.xcworkspace`, select the **Runner** target ›
+   **Signing & Capabilities**, tick *Automatically manage signing* and pick
+   your *Personal Team*. If the bundle ID is taken, change it to something
+   unique (for example `com.<you>.focusedMind`).
+3. Connect the iPhone by cable, unlock it and tap **Trust**. On the iPhone,
+   turn on **Settings › Privacy & Security › Developer Mode** and restart.
+4. Run `flutter run --release -d <your iPhone>` (see `flutter devices`).
+5. On the iPhone, allow the developer under **Settings › General › VPN &
+   Device Management**, then open Focused Mind and allow Bluetooth.
+
+Apps signed with a free Personal Team expire after 7 days; run step 4 again
+to renew. With a paid Apple Developer account pick that team in step 2;
+the app then stays installed for a year.
+
+To build without signing (for example to re-sign with another tool):
+`flutter build ios --release --no-codesign` writes
+`build/ios/iphoneos/Runner.app`. CI also publishes an unsigned
+`FocusedMind-<version>-unsigned.ipa` (see [CI and releases](#ci-and-releases)):
+install it with a tool that re-signs it with your Apple ID, such as
+Sideloadly or AltStore.
+
 ## Requirements
 
 - macOS 12 or later
+- For iPhone builds: the iOS platform in Xcode (**Settings › Components**,
+  or `xcodebuild -downloadPlatform iOS`)
 - Flutter 3.47+ (Dart 3.13+): `brew install --cask flutter`
 - Xcode (full install from the App Store), then
   `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` and
@@ -125,38 +240,67 @@ install over old ones:
 
 Keep the keystore safe: an app signed with a lost key can't be updated.
 
-`.github/workflows/macos.yml` runs on GitHub's macOS runners:
+`.github/workflows/ios.yml` builds the iPhone app without code signing on
+every push and pull request, packages it as
+`FocusedMind-<version>-unsigned.ipa` (a run artifact), and attaches it to
+the release on `v` tags.
 
-- **Every push to `main` and every pull request:** `flutter analyze` and
-  `flutter test`, then a release build packaged as a DMG. The DMG is
-  attached to the run as an artifact.
-- **A tag starting with `v`** (for example `git tag v0.1.0 && git push
-  origin v0.1.0`) also publishes a GitHub release with
-  `FocusedMind-<version>.dmg`. The version comes from the tag. Tags with a
-  `-`, such as `v0.2.0-beta.1`, are marked as pre-releases.
+Its `testflight` job signs the app and uploads it to TestFlight on `v`
+tags and when started by hand (**Actions › iOS › Run workflow**), with
+the version and build number described in
+[Releases and versions](#releases-and-versions). One-time setup:
 
-Without signing secrets the app keeps an ad-hoc signature, and users have
-to allow the first launch under System Settings › Privacy & Security (see
-[Install](#install)). To ship a signed and notarized DMG that opens without
-a warning:
-
-1. Join the Apple Developer Program.
-2. Create a **Developer ID Application** certificate (Xcode › Settings ›
-   Accounts › Manage Certificates), then export it with its private key
-   from Keychain Access as a password-protected `.p12`.
-3. Create an app-specific password for your Apple ID at appleid.apple.com.
-4. Add these repository secrets, for example with
-   `gh secret set MACOS_CERTIFICATE_P12 < <(base64 -i cert.p12)`:
+1. In [App Store Connect](https://appstoreconnect.apple.com), **Apps › +
+   › New App**, iOS, bundle ID `com.kashubianrodos.focusedMind` (register
+   it under **Certificates, Identifiers & Profiles › Identifiers** first if
+   it is not listed).
+2. **Users and Access › Integrations › App Store Connect API › Team Keys**,
+   generate a key with the **Admin** role (needed for Apple to create the
+   distribution certificate) and download the `.p8` file. Note its key ID
+   and the issuer ID.
+3. In Keychain Access, export your *Apple Development* certificate with
+   its private key as a `.p12` with a password.
+4. Add the repository secrets:
 
 | Secret | What |
 |---|---|
-| `MACOS_CERTIFICATE_P12` | Developer ID Application certificate and key, exported as .p12, base64-encoded (`base64 -i cert.p12 \| pbcopy`) |
-| `MACOS_CERTIFICATE_PASSWORD` | Password of that .p12 |
-| `MACOS_SIGNING_IDENTITY` | e.g. `Developer ID Application: Your Name (TEAMID)` |
-| `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_SPECIFIC_PASSWORD` | For notarization (`notarytool`); app-specific password from appleid.apple.com |
+| `APPLE_TEAM_ID` | Your team ID (Membership details on developer.apple.com) |
+| `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID` | The API key's ID and the issuer ID |
+| `APP_STORE_CONNECT_KEY_P8` | The `.p8` file's contents (`gh secret set APP_STORE_CONNECT_KEY_P8 < AuthKey_XXXX.p8`) |
+| `IOS_SIGNING_P12_BASE64` | The `.p12`, base64-encoded (`base64 -i dev.p12 \| gh secret set IOS_SIGNING_P12_BASE64`) |
+| `IOS_SIGNING_P12_PASSWORD` | Its password |
 
-Then push a new `v` tag. CI signs BrainBit's libraries and the app with the
-hardened runtime, notarizes the DMG and staples the ticket.
+After processing (a few minutes), the build appears under **TestFlight**
+in App Store Connect; add yourself as an internal tester to install it.
+
+`.github/workflows/test.yml` runs `flutter analyze` and `flutter test` on
+every push to `main` and every pull request, on a macOS runner because the
+host tests load BrainBit's macOS library.
+
+### Releases and versions
+
+The version lives in `pubspec.yaml` (`version: 0.3.0+1`); the part after
+`+` is only used for local builds. `tool/ci_version.sh` gives the Android
+and iOS workflows the same version and build number:
+
+- **Version:** from the tag on tag builds, otherwise from `pubspec.yaml`.
+  The tag must match `pubspec.yaml`, or the build fails.
+- **App version:** the version without a pre-release suffix
+  (`0.3.0-beta.1` ships as `0.3.0`), because iOS accepts numbers only.
+- **Build number:** the number of commits, the same on both platforms and
+  rising with every commit, so new Android builds install over old ones and
+  each TestFlight upload is unique.
+
+To release, set the new version in `pubspec.yaml`, commit, then tag and
+push:
+
+```sh
+git tag v0.3.0 && git push origin v0.3.0
+```
+
+The tag builds the APK and the unsigned IPA, publishes both in a GitHub
+release with generated notes, and uploads the signed build to TestFlight.
+Tags with a `-`, such as `v0.3.0-beta.1`, are marked as pre-releases.
 
 ## Headband
 

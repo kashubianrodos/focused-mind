@@ -57,7 +57,7 @@ class FakeApi implements NeuroSdkApi {
   final sensors = <FakeSensor>[];
 
   @override
-  void startScan() {
+  Future<void> startScan() async {
     if (scanError case final e?) throw e;
     scanning = true;
   }

@@ -68,10 +68,12 @@ enum HeadbandConnectionState {
 
 /// The BrainBit SDK device families this app supports.
 enum HeadbandFamily {
-  /// Mindo, reported by the SDK as `SensorLEHeadband` (11).
+  /// neurosdk2 `SensorLEHeadband` (11). The tested Mindo reports BrainBit
+  /// Black instead (see [brainBit]).
   headband,
 
-  /// Original BrainBit (`SensorLEBrainBit`, 3).
+  /// Original BrainBit (`SensorLEBrainBit`, 3) and BrainBit Black
+  /// (`SensorLEBrainBitBlack`, 4), which Mindo reports itself as.
   brainBit,
 
   /// BrainBit 2 (`SensorLEBrainBit2`, 18).

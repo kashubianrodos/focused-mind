@@ -31,27 +31,11 @@ class FfiNeuroSdkApi implements NeuroSdkApi {
   bool _scanning = false;
 
   @override
-  void startScan() {
-    using((arena) {
-      final status = arena<OpStatus>();
-      if (_scanner == nullptr) {
-        const codes = SensorFamilyCode.scanFilters;
-        final filters = arena<Uint8>(codes.length);
-        for (var i = 0; i < codes.length; i++) {
-          filters[i] = codes[i];
-        }
-        _scanner = _sdk.createScanner(filters, codes.length, status);
-        if (_scanner == nullptr || status.ref.Success == 0) {
-          _scanner = nullptr;
-          throw _bluetoothError(status);
-        }
-      }
-      if (_sdk.startScanner(_scanner, status, 1) == 0 ||
-          status.ref.Success == 0) {
-        throw _bluetoothError(status);
-      }
-      _scanning = true;
-    });
+  Future<void> startScan() async {
+    final existing = _scanner == nullptr ? null : _scanner.address;
+    final address = await Isolate.run(() => _startScanner(existing));
+    _scanner = Pointer.fromAddress(address);
+    _scanning = true;
   }
 
   @override
@@ -69,7 +53,7 @@ class FfiNeuroSdkApi implements NeuroSdkApi {
 
   @override
   Future<NeuroSensor> connect(DeviceInfo device) async {
-    if (_scanner == nullptr) startScan();
+    if (_scanner == nullptr) await startScan();
     // Mindo ("BrainBit Black") must be bonded before the SDK can connect;
     // EEGWaves bonds first too. `MainActivity` does it on Android. macOS has
     // no public bonding API, which is why the band won't connect there.
@@ -89,6 +73,33 @@ class FfiNeuroSdkApi implements NeuroSdkApi {
     if (_scanner != nullptr) _sdk.freeScanner(_scanner);
     _scanner = nullptr;
   }
+}
+
+/// Creates the scanner if [existing] is null, starts it, and returns its
+/// address. Runs on a helper isolate (see [NeuroSdkApi.startScan]).
+int _startScanner(int? existing) {
+  final sdk = NeuroSdkLibrary.open(required: const []);
+  return using((arena) {
+    final status = arena<OpStatus>();
+    var scanner = existing == null
+        ? nullptr
+        : Pointer<SensorScanner>.fromAddress(existing);
+    if (scanner == nullptr) {
+      const codes = SensorFamilyCode.scanFilters;
+      final filters = arena<Uint8>(codes.length);
+      for (var i = 0; i < codes.length; i++) {
+        filters[i] = codes[i];
+      }
+      scanner = sdk.createScanner(filters, codes.length, status);
+      if (scanner == nullptr || status.ref.Success == 0) {
+        throw _bluetoothError(status);
+      }
+    }
+    if (sdk.startScanner(scanner, status, 1) == 0 || status.ref.Success == 0) {
+      throw _bluetoothError(status);
+    }
+    return scanner.address;
+  });
 }
 
 BluetoothUnavailableException _bluetoothError(Pointer<OpStatus> status) {

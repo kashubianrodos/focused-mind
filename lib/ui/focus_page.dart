@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/services.dart';
+import '../focus/session_kind.dart';
 import '../headband/headband_source.dart';
 import '../sessions/session_controller.dart';
 import 'connect_panel.dart';
 import 'contact_view.dart';
 import 'live_session_view.dart';
+import 'session_kind_chip.dart';
 import 'summary_view.dart';
 
 /// Planned session lengths offered at start; null is open-ended.
@@ -26,12 +28,14 @@ class FocusPage extends ConsumerStatefulWidget {
 
 class _FocusPageState extends ConsumerState<FocusPage> {
   Duration? _planned = const Duration(minutes: 25);
+  late SessionKind _kind;
   late final AppServices _services;
 
   @override
   void initState() {
     super.initState();
     _services = ref.read(servicesProvider);
+    _kind = _services.settingsRepository.lastSessionKind;
     _services.connection.state.addListener(_showContactWhenIdle);
     _services.session.phase.addListener(_showContactWhenIdle);
   }
@@ -83,6 +87,8 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                 SessionPhase.idle => _StartView(
                   planned: _planned,
                   onPlanned: (d) => setState(() => _planned = d),
+                  kind: _kind,
+                  onKind: (k) => setState(() => _kind = k),
                 ),
                 SessionPhase.signalCheck => const _SignalCheckView(),
                 SessionPhase.calibrating => const _CalibratingView(),
@@ -93,6 +99,8 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                 SessionPhase.ended => _EndedView(
                   planned: _planned,
                   onPlanned: (d) => setState(() => _planned = d),
+                  kind: _kind,
+                  onKind: (k) => setState(() => _kind = k),
                 ),
               },
             ],
@@ -104,10 +112,22 @@ class _FocusPageState extends ConsumerState<FocusPage> {
 }
 
 class _StartView extends ConsumerWidget {
-  const _StartView({required this.planned, required this.onPlanned});
+  const _StartView({
+    required this.planned,
+    required this.onPlanned,
+    required this.kind,
+    required this.onKind,
+  });
 
   final Duration? planned;
   final ValueChanged<Duration?> onPlanned;
+  final SessionKind kind;
+  final ValueChanged<SessionKind> onKind;
+
+  Future<void> _start(AppServices services) async {
+    await services.settingsRepository.saveLastSessionKind(kind);
+    await services.session.start(planned: planned, kind: kind);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -117,8 +137,29 @@ class _StartView extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Start a focus session',
+          switch (kind) {
+            SessionKind.focus => 'Start a focus session',
+            SessionKind.meditation => 'Start a meditation session',
+          },
+          key: const ValueKey('start-heading'),
           style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 12),
+        SegmentedButton<SessionKind>(
+          segments: const [
+            ButtonSegment(
+              value: SessionKind.focus,
+              icon: Icon(Icons.center_focus_strong),
+              label: Text('Focus', key: ValueKey('kind-focus')),
+            ),
+            ButtonSegment(
+              value: SessionKind.meditation,
+              icon: Icon(Icons.self_improvement),
+              label: Text('Meditation', key: ValueKey('kind-meditation')),
+            ),
+          ],
+          selected: {kind},
+          onSelectionChanged: (s) => onKind(s.first),
         ),
         const SizedBox(height: 12),
         SegmentedButton<Duration?>(
@@ -141,9 +182,7 @@ class _StartView extends ConsumerWidget {
         const SizedBox(height: 16),
         FilledButton.icon(
           key: const ValueKey('start-session'),
-          onPressed: connected
-              ? () => services.session.start(planned: planned)
-              : null,
+          onPressed: connected ? () => _start(services) : null,
           icon: const Icon(Icons.play_arrow),
           label: const Text('Start session'),
         ),
@@ -166,6 +205,8 @@ class _SignalCheckView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SessionKindChip(services.session.kind),
+        const SizedBox(height: 8),
         Text(
           'Checking the signal',
           style: Theme.of(context).textTheme.headlineSmall,
@@ -199,6 +240,8 @@ class _CalibratingView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SessionKindChip(session.kind),
+        const SizedBox(height: 8),
         Text('Calibrating', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
         const Text('Sit still with your eyes open and relax for a moment.'),
@@ -230,6 +273,8 @@ class _CalibrationFailedView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SessionKindChip(session.kind),
+        const SizedBox(height: 8),
         Text(
           'Calibration failed',
           style: Theme.of(context).textTheme.headlineSmall,
@@ -253,10 +298,17 @@ class _CalibrationFailedView extends ConsumerWidget {
 }
 
 class _EndedView extends ConsumerWidget {
-  const _EndedView({required this.planned, required this.onPlanned});
+  const _EndedView({
+    required this.planned,
+    required this.onPlanned,
+    required this.kind,
+    required this.onKind,
+  });
 
   final Duration? planned;
   final ValueChanged<Duration?> onPlanned;
+  final SessionKind kind;
+  final ValueChanged<SessionKind> onKind;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -265,6 +317,10 @@ class _EndedView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (record != null) ...[
+          SessionKindChip(record.summary.kind),
+          const SizedBox(height: 8),
+        ],
         Text(
           'Session summary',
           style: Theme.of(context).textTheme.headlineSmall,
@@ -274,9 +330,15 @@ class _EndedView extends ConsumerWidget {
           SummaryView(
             record: record,
             threshold: services.settings.value.threshold,
+            baseline: services.settings.value.baseline,
           ),
         const SizedBox(height: 24),
-        _StartView(planned: planned, onPlanned: onPlanned),
+        _StartView(
+          planned: planned,
+          onPlanned: onPlanned,
+          kind: kind,
+          onKind: onKind,
+        ),
       ],
     );
   }

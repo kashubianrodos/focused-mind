@@ -14,12 +14,18 @@ class NeuroSdkLoadException implements Exception {
   String toString() => 'NeuroSdkLoadException: $message';
 }
 
-/// Loads `libneurosdk2` (`.dylib` on macOS, `.so` on Android), which the `neurosdk2` plugin bundles into the
-/// app (design D3), and checks every function the app binds before use.
+/// Loads the neurosdk2 C library (`.dylib` on macOS, `.so` on Android, a
+/// framework on iOS), which the `neurosdk2` plugin bundles into the app
+/// (design D3), and checks every function the app binds before use.
 abstract final class NeuroSdkLibrary {
   static final fileName = Platform.isAndroid
       ? 'libneurosdk2.so'
       : 'libneurosdk2.dylib';
+
+  /// On iOS the plugin links the same C API as the `flutter_neurosdk2_ios`
+  /// framework.
+  static const iosFileName =
+      'flutter_neurosdk2_ios.framework/flutter_neurosdk2_ios';
 
   /// Every function `ffigen.yaml` binds.
   static const symbols = [
@@ -59,7 +65,7 @@ abstract final class NeuroSdkLibrary {
     String? path,
     List<String> required = symbols,
   }) {
-    path ??= fileName;
+    path ??= Platform.isIOS ? iosFileName : fileName;
     final DynamicLibrary lib;
     try {
       lib = DynamicLibrary.open(path);

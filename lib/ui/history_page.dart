@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/services.dart';
+import '../focus/session_kind.dart';
 import '../sessions/export_service.dart';
 import '../sessions/session_models.dart';
 import 'format.dart';
+import 'session_kind_chip.dart';
 import 'summary_view.dart';
 
 /// Past sessions, newest first (focus-sessions spec: "Session history").
@@ -71,7 +75,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     final result = await _services.export.export(s.id);
     final message = switch (result) {
       ExportSaved(:final folder, :final files) =>
-        'Exported ${files.join(' and ')} to $folder',
+        'Exported ${files.join(' and ')} to '
+            '${Platform.isIOS ? 'Files › On My iPhone › Focused Mind' : folder}',
       ExportCancelled() => null,
       ExportFailed(:final message) => 'Export failed: $message',
     };
@@ -107,9 +112,17 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: SummaryView(
-              record: record,
-              threshold: services.settings.value.threshold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SessionKindChip(record.summary.kind),
+                const SizedBox(height: 12),
+                SummaryView(
+                  record: record,
+                  threshold: services.settings.value.threshold,
+                  baseline: services.settings.value.baseline,
+                ),
+              ],
             ),
           ),
         ),
@@ -142,13 +155,30 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, i) {
             final s = items[i];
-            final avg = s.averageScore?.round().toString() ?? '–';
+            final meditation = s.kind == SessionKind.meditation;
+            final avg = s.averageScore == null
+                ? '–'
+                : (meditation ? 100 - s.averageScore! : s.averageScore!)
+                      .round()
+                      .toString();
             return ListTile(
               key: ValueKey('history-${s.id}'),
-              title: Text(_date(s.startedAt)),
+              leading: Tooltip(
+                key: ValueKey('kind-${s.id}'),
+                message: s.kind.label,
+                child: Icon(
+                  meditation
+                      ? Icons.self_improvement
+                      : Icons.center_focus_strong,
+                ),
+              ),
+              title: Text('${_date(s.startedAt)} · ${s.kind.label}'),
               subtitle: Text(
-                '${formatMinutes(s.duration)} · average focus $avg · '
-                '${s.drops} drops · ${s.recoveries} recoveries',
+                meditation
+                    ? '${formatMinutes(s.duration)} · average calm $avg · '
+                          '${s.drops} restless episodes'
+                    : '${formatMinutes(s.duration)} · average focus $avg · '
+                          '${s.drops} drops · ${s.recoveries} recoveries',
               ),
               onTap: () => _open(s),
               trailing: Row(

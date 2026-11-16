@@ -1,0 +1,40 @@
+name: Test
+
+# Analyzes and tests every push and pull request. It runs on macOS because
+# the host tests load BrainBit's macOS EmotionalMath library. Release
+# packages (Android APK, iPhone IPA and TestFlight) come from android.yml
+# and ios.yml.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.47.9'
+
+jobs:
+  test:
+    name: Analyze and test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      # Host tests run BrainBit's real EmotionalMath library and compile the
+      # native callback shim through the build hook.
+      - run: flutter test

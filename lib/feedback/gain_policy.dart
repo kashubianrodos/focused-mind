@@ -1,3 +1,5 @@
+import '../focus/focus_score.dart';
+import '../focus/session_kind.dart';
 import 'feedback_settings.dart';
 
 /// How long the score may be unavailable before feedback fades to silence.
@@ -13,9 +15,16 @@ const _minFraction = 0.4;
 /// | Alert      | 0                     | scaled by focus deficit  |
 /// | Continuous | scaled by focus level | 0                        |
 ///
+/// In a meditation session [mode] is ignored (meditation-sessions spec,
+/// design D5): the sound plays outside a restless episode, from the floor at
+/// the Relaxation/Concentration boundary up to [volume] in Deep relaxation of
+/// [scale].
+///
 /// Muted, or unavailable for more than [unavailableSilenceAfter], gives 0.
 /// While unavailable for less than that, the last known [score] is used.
 double targetGain({
+  SessionKind kind = SessionKind.focus,
+  ScoreScale scale = const ScoreScale(),
   required FeedbackMode mode,
   required bool dropActive,
   required double? score,
@@ -26,6 +35,14 @@ double targetGain({
 }) {
   if (muted || unavailableFor > unavailableSilenceAfter || volume <= 0) {
     return 0;
+  }
+  if (kind == SessionKind.meditation) {
+    if (dropActive || score == null) return 0;
+    final boundary = scale.baseline;
+    final deep = scale.zoneBoundaries.first;
+    final range = boundary - deep;
+    final level = range <= 0 ? 1.0 : (boundary - score) / range;
+    return volume * _fraction(level);
   }
   switch (mode) {
     case FeedbackMode.alert:

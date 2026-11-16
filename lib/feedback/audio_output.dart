@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'feedback_settings.dart';
@@ -35,8 +38,27 @@ class JustAudioOutput implements AudioOutput {
   final _oneShot = AudioPlayer();
   String? _loaded;
 
+  bool _sessionConfigured = false;
+
+  /// On iOS, sounds must keep playing with the screen locked or the app in
+  /// the background and with the silent switch on, and mix with the user's
+  /// own music instead of stopping it.
+  Future<void> _configureSession() async {
+    if (_sessionConfigured || !Platform.isIOS) return;
+    _sessionConfigured = true;
+    final session = await AudioSession.instance;
+    await session.configure(
+      const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.mixWithOthers,
+      ),
+    );
+  }
+
   @override
   Future<void> load(Soundscape soundscape, {required bool mono}) async {
+    await _configureSession();
     final asset = soundscape.assetFor(mono: mono);
     if (_loaded == asset) return;
     await _loop.setAudioSource(AudioSource.asset(asset));
@@ -65,6 +87,7 @@ class JustAudioOutput implements AudioOutput {
     double volume, {
     required bool mono,
   }) async {
+    await _configureSession();
     await _oneShot.setAudioSource(
       ClippingAudioSource(
         child: AudioSource.asset(soundscape.assetFor(mono: mono)),
@@ -78,6 +101,7 @@ class JustAudioOutput implements AudioOutput {
 
   @override
   Future<void> playChime(double volume) async {
+    await _configureSession();
     await _oneShot.setAudioSource(AudioSource.asset(endChimeAsset));
     await _oneShot.setVolume(volume);
     _oneShot.play();

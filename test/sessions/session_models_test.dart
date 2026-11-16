@@ -3,6 +3,7 @@ import 'package:focused_mind/feedback/feedback_settings.dart';
 import 'package:focused_mind/focus/focus_score.dart';
 import 'package:focused_mind/focus/focus_state.dart';
 import 'package:focused_mind/focus/rhythms.dart';
+import 'package:focused_mind/focus/session_kind.dart';
 import 'package:focused_mind/sessions/session_models.dart';
 
 void main() {
@@ -59,8 +60,10 @@ void main() {
       },
       averageRhythms: RhythmShares.normalized(25, 35, 40),
       hasRawRecording: true,
+      kind: SessionKind.meditation,
     );
     final back = SessionSummary.fromJson(s.toJson());
+    expect(back.kind, SessionKind.meditation);
     expect(
       back.timeInZoneOf(FocusZone.concentration),
       const Duration(minutes: 20),
@@ -88,5 +91,6 @@ void main() {
     expect(s.averageRhythms, isNull);
     expect(s.hasRawRecording, isFalse);
     expect(s.hasRhythms, isFalse);
+    expect(s.kind, SessionKind.focus);
   });
 }

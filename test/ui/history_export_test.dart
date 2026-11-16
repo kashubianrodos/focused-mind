@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_mind/focus/focus_state.dart';
 import 'package:focused_mind/focus/rhythms.dart';
+import 'package:focused_mind/focus/session_kind.dart';
+import 'package:focused_mind/sessions/session_models.dart';
 import 'package:focused_mind/sessions/session_recorder.dart';
 
 import '../support/app_harness.dart';
@@ -101,6 +103,47 @@ void main() {
     final h = await pumpApp(tester, repository: repoWithSession(raw: true));
     await openHistory(tester);
     expect(find.byKey(const ValueKey('raw-s1')), findsOneWidget);
+    await shutDown(tester, h);
+  });
+
+  testWidgets('history marks each session type; old sessions are focus', (
+    tester,
+  ) async {
+    final repo = repoWithSession();
+    final m = SessionRecorder(
+      id: 'm1',
+      startedAt: DateTime(2026, 11, 12, 21),
+      kind: SessionKind.meditation,
+    );
+    for (var i = 0; i < 30; i++) {
+      m.record(score: 20, state: FocusState.focused);
+    }
+    repo.saved['m1'] = m.finish();
+    final old = SessionSummary.fromJson({
+      ...repo.saved['s1']!.summary.toJson()..remove('kind'),
+      'id': 'old',
+    });
+    repo.saved['old'] = SessionRecord(
+      summary: old,
+      timeline: repo.saved['s1']!.timeline,
+      marks: const [],
+    );
+    final h = await pumpApp(tester, repository: repo);
+    await openHistory(tester);
+    String kindOf(String id) =>
+        tester.widget<Tooltip>(find.byKey(ValueKey('kind-$id'))).message!;
+    expect(kindOf('m1'), 'Meditation session');
+    expect(kindOf('s1'), 'Focus session');
+    expect(kindOf('old'), 'Focus session');
+    expect(find.textContaining('average calm 80'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('history-m1')));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Time calm'), findsOneWidget);
+    expect(find.text('Meditation session'), findsWidgets);
     await shutDown(tester, h);
   });
 }

@@ -38,15 +38,22 @@ class NeuroSdkHeadbandSource implements HeadbandSource {
   @override
   Stream<List<DeviceInfo>> scan() {
     Timer? poll;
+    var cancelled = false;
     late final StreamController<List<DeviceInfo>> controller;
     controller = StreamController<List<DeviceInfo>>(
-      onListen: () {
+      onListen: () async {
         try {
-          _api.startScan();
+          await _api.startScan();
         } on Object catch (e, s) {
-          controller
-            ..addError(e, s)
-            ..close();
+          if (!cancelled) {
+            controller
+              ..addError(e, s)
+              ..close();
+          }
+          return;
+        }
+        if (cancelled) {
+          _api.stopScan();
           return;
         }
         var last = const <DeviceInfo>[];
@@ -57,6 +64,7 @@ class NeuroSdkHeadbandSource implements HeadbandSource {
         });
       },
       onCancel: () {
+        cancelled = true;
         poll?.cancel();
         _apiInstance?.stopScan();
         if (identical(_scan, controller)) _scan = null;

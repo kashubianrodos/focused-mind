@@ -5,9 +5,14 @@
 What is known without the band (from the BrainBit Neurofeedback 1.3.5 app
 and the neurosdk2 1.0.21 package):
 
-- The vendor app talks to Mindo through neurosdk2's **Headband** device type
-  (`SensorLEHeadband` = 11), using `addSignalDataCallbackHeadband` and
-  `addResistCallbackHeadband`.
+- The vendor app has a dedicated **Headband** path (`SensorLEHeadband` = 11,
+  `addSignalDataCallbackHeadband`, `addResistCallbackHeadband`), but the
+  tested Mindo does **not** report that family: it advertises as
+  "BrainBit Black" with `SensFamily` 4 (`SensorLEBrainBitBlack`) and streams
+  through the BrainBit callbacks (`addSignalDataCallbackBrainBit`,
+  `addResistCallbackBrainBit`). See the table and Pairing below.
+- On iOS the scanner is created and started on a helper isolate, as BrainBit's
+  own plugin does from a background queue.
 - The SDK frees signal buffers as soon as its callback returns, so signal
   and resistance callbacks go through a small C++ shim
   (`native/fm_shim.cpp`, built by `hook/build.dart`) that copies each batch
@@ -39,7 +44,7 @@ and the neurosdk2 1.0.21 package):
 
 | Item | Value |
 |---|---|
-| Reported `SensFamily` / `SensModel` | 4 (BrainBit Black) / 0, name "BrainBit Black", `PairingRequired` = 1. Connects as family 4 with the BrainBit callbacks once bonded (verified on Android, Pixel 8) |
+| Reported `SensFamily` / `SensModel` | 4 (BrainBit Black) / 0, name "BrainBit Black", `PairingRequired` = 1. Connects as family 4 with the BrainBit callbacks once bonded (verified on Android, Pixel 8). On iOS (iPhone 15) it scans, connects and reports resistance without a separate pairing step. |
 | Sampling rate (`readSamplingFrequencySensor`) | _pending (expected 250 Hz)_ |
 | Resistance with good contact | _pending_ |
 | Resistance with poor contact | _pending_ |
@@ -51,6 +56,7 @@ and the neurosdk2 1.0.21 package):
 | Typical theta / alpha / beta shares, eyes open, at rest | _pending_ |
 | Same, during focused work | _pending (expect more beta)_ |
 | False alarms in a 25-minute session | _pending_ |
+| Meditation session (calm score, mirrored gauge, sound while calm, silence after concentrating, history and export type) | Works on iPhone with Mindo (2026-11-12); Calm/Restless switching near the boundary not reported as a problem |
 
 ### Note on the score scale
 

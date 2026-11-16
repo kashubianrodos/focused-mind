@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_mind/focus/focus_score.dart';
 import 'package:focused_mind/focus/focus_state.dart';
 import 'package:focused_mind/focus/rhythms.dart';
+import 'package:focused_mind/focus/session_kind.dart';
 import 'package:focused_mind/sessions/session_models.dart';
 import 'package:focused_mind/sessions/session_recorder.dart';
 import 'package:focused_mind/ui/summary_view.dart';
@@ -90,5 +91,50 @@ void main() {
     expect(find.byKey(const ValueKey('summary-rhythm-chart')), findsNothing);
     expect(find.byKey(const ValueKey('stat-zone-relaxation')), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  String statText(WidgetTester tester, String key) =>
+      tester.widget<Text>(find.byKey(ValueKey('stat-$key'))).data!;
+
+  testWidgets('a meditation summary uses calm wording and the calm score', (
+    tester,
+  ) async {
+    final r = SessionRecorder(
+      id: 'm',
+      startedAt: DateTime(2026, 11, 12, 20),
+      kind: SessionKind.meditation,
+    );
+    for (var i = 0; i < 60; i++) {
+      r.record(score: 20, state: FocusState.focused);
+    }
+    for (var i = 0; i < 20; i++) {
+      r.record(score: 80, state: FocusState.distracted);
+    }
+    await show(tester, r.finish());
+    expect(find.text('Time calm'), findsOneWidget);
+    expect(find.text('Restless'), findsOneWidget);
+    expect(find.text('Restless episodes'), findsOneWidget);
+    expect(find.text('Longest calm stretch'), findsOneWidget);
+    expect(find.text('Average calm'), findsOneWidget);
+    expect(find.text('Neutral'), findsNothing);
+    expect(find.text('Feedback mode'), findsNothing);
+    // Average focus (60·20 + 20·80) / 80 = 35 → calm 65.
+    expect(statText(tester, 'Average focus'), '65');
+    expect(statText(tester, 'Focused'), '1 min');
+    final chart = tester.widget<LineChart>(find.byType(LineChart).first).data;
+    expect(chart.lineBarsData.first.spots.first.y, 80);
+  });
+
+  testWidgets('a focus summary keeps its wording', (tester) async {
+    final r = SessionRecorder(id: 'f', startedAt: DateTime(2026, 11, 12, 9));
+    for (var i = 0; i < 10; i++) {
+      r.record(score: 70, state: FocusState.focused);
+    }
+    await show(tester, r.finish());
+    expect(find.text('Average focus'), findsOneWidget);
+    expect(find.text('Focus drops'), findsOneWidget);
+    expect(find.text('Feedback mode'), findsOneWidget);
+    expect(find.text('Time calm'), findsNothing);
+    expect(statText(tester, 'Average focus'), '70');
   });
 }
