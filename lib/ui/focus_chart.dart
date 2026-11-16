@@ -38,82 +38,84 @@ class FocusChart extends StatelessWidget {
     }
     if (gapStart != null) gaps.add(_gap(gapStart, maxX.toInt() + 1, scheme));
 
-    return LineChart(
-      duration: Duration.zero,
-      LineChartData(
-        minY: 0,
-        maxY: 100,
-        minX: 0,
-        maxX: maxX < 60 ? 60 : maxX,
-        clipData: const FlClipData.all(),
-        gridData: const FlGridData(drawVerticalLine: false),
-        borderData: FlBorderData(show: false),
-        lineTouchData: const LineTouchData(enabled: false),
-        rangeAnnotations: RangeAnnotations(verticalRangeAnnotations: gaps),
-        extraLinesData: ExtraLinesData(
-          horizontalLines: [
-            HorizontalLine(
-              y: threshold,
-              color: scheme.tertiary,
-              strokeWidth: 1,
-              dashArray: const [6, 4],
-            ),
-          ],
-          verticalLines: [
-            for (final m in marks)
-              if (m.kind == MarkKind.drop || m.kind == MarkKind.recovery)
-                VerticalLine(
-                  x: m.second.toDouble(),
-                  color: m.kind == MarkKind.drop
-                      ? scheme.error.withValues(alpha: 0.5)
-                      : Colors.green.withValues(alpha: 0.5),
-                  strokeWidth: 1,
-                ),
-          ],
-        ),
-        titlesData: FlTitlesData(
-          topTitles: const AxisTitles(),
-          rightTitles: const AxisTitles(),
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              interval: 25,
-            ),
+    return LayoutBuilder(
+      builder: (context, box) => LineChart(
+        duration: Duration.zero,
+        LineChartData(
+          minY: 0,
+          maxY: 100,
+          minX: 0,
+          maxX: maxX < 60 ? 60 : maxX,
+          clipData: const FlClipData.all(),
+          gridData: const FlGridData(drawVerticalLine: false),
+          borderData: FlBorderData(show: false),
+          lineTouchData: const LineTouchData(enabled: false),
+          rangeAnnotations: RangeAnnotations(verticalRangeAnnotations: gaps),
+          extraLinesData: ExtraLinesData(
+            horizontalLines: [
+              HorizontalLine(
+                y: threshold,
+                color: scheme.tertiary,
+                strokeWidth: 1,
+                dashArray: const [6, 4],
+              ),
+            ],
+            verticalLines: [
+              for (final m in marks)
+                if (m.kind == MarkKind.drop || m.kind == MarkKind.recovery)
+                  VerticalLine(
+                    x: m.second.toDouble(),
+                    color: m.kind == MarkKind.drop
+                        ? scheme.error.withValues(alpha: 0.5)
+                        : Colors.green.withValues(alpha: 0.5),
+                    strokeWidth: 1,
+                  ),
+            ],
           ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 24,
-              interval: _labelInterval(maxX),
-              // fl_chart always labels the last point too; skip it unless
-              // it lands on the interval, or it overprints its neighbour.
-              getTitlesWidget: (value, meta) =>
-                  value % meta.appliedInterval != 0
-                  ? const SizedBox.shrink()
-                  : SideTitleWidget(
-                      meta: meta,
-                      child: Text(
-                        '${value ~/ 60}m',
-                        style: Theme.of(context).textTheme.labelSmall,
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(),
+            rightTitles: const AxisTitles(),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                interval: 25,
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 24,
+                interval: timeAxisInterval(maxX, box.maxWidth),
+                // fl_chart always labels the last point too; skip it unless
+                // it lands on the interval, or it overprints its neighbour.
+                getTitlesWidget: (value, meta) =>
+                    value % meta.appliedInterval != 0
+                    ? const SizedBox.shrink()
+                    : SideTitleWidget(
+                        meta: meta,
+                        child: Text(
+                          timeAxisLabel(value),
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: false,
+              color: scheme.primary,
+              barWidth: 2,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: scheme.primary.withValues(alpha: 0.12),
+              ),
+            ),
+          ],
         ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: false,
-            color: scheme.primary,
-            barWidth: 2,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              color: scheme.primary.withValues(alpha: 0.12),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -124,11 +126,30 @@ class FocusChart extends StatelessWidget {
         x2: to.toDouble(),
         color: scheme.outline.withValues(alpha: 0.15),
       );
+}
 
-  static double _labelInterval(double maxX) {
-    final minutes = maxX / 60;
-    if (minutes <= 10) return 60;
-    if (minutes <= 30) return 300;
-    return 600;
+/// Seconds between time-axis labels: the smallest round step that keeps
+/// labels at least [minLabelGap] px apart over [seconds] of session drawn
+/// [width] px wide (minus the 40 px left axis).
+double timeAxisInterval(
+  double seconds,
+  double width, {
+  double minLabelGap = 56,
+}) {
+  const stepsMinutes = [1, 2, 5, 10, 15, 20, 30, 60, 120, 180, 240, 360];
+  // ponytail: unbounded width (never seen in practice) falls back to 800 px.
+  final w = width.isFinite ? width : 800;
+  final maxLabels = ((w - 40) / minLabelGap).floor().clamp(2, 1000);
+  for (final m in stepsMinutes) {
+    if (seconds / (m * 60) <= maxLabels) return m * 60.0;
   }
+  return stepsMinutes.last * 60.0;
+}
+
+/// "45m", "1h", "1h30m".
+String timeAxisLabel(double seconds) {
+  final minutes = seconds ~/ 60;
+  if (minutes < 60) return '${minutes}m';
+  final m = minutes % 60;
+  return '${minutes ~/ 60}h${m == 0 ? '' : '${m}m'}';
 }
