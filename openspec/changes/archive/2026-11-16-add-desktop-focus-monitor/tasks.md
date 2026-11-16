@@ -9,15 +9,15 @@
   - dev: `ffigen`, `fake_async`, `mocktail`
 
   Verify `flutter pub get` and `flutter build macos --debug` succeed, and that the built `.app` contains `libneurosdk2.dylib`.
-- [ ] 1.4 Set the macOS deployment target to 10.15 or later. Add `com.apple.security.device.bluetooth` to `DebugProfile.entitlements` and `Release.entitlements`, and add `NSBluetoothAlwaysUsageDescription` to Info.plist. Verify the built app shows the macOS Bluetooth permission prompt on first scan.
+- [x] 1.4 Set the macOS deployment target to 10.15 or later. Add `com.apple.security.device.bluetooth` to `DebugProfile.entitlements` and `Release.entitlements`, and add `NSBluetoothAlwaysUsageDescription` to Info.plist. Verify the built app shows the macOS Bluetooth permission prompt on first scan.
 - [x] 1.5 Create the folder layout `lib/{headband,focus,feedback,sessions,settings,ui}` and set up `flutter analyze` with `flutter_lints`. Verify analyze reports no issues.
 
 ## 2. neurosdk2 FFI binding and Mindo check (design D3)
 
 - [x] 2.1 Vendor `sdk_api.h` and `cmn_type.h` from the pinned `neurosdk2` version into `third_party/neurosdk2/include/` (with a `VERSION` note). Add an `ffigen.yaml` limited to the design D3 function list, and generate `lib/headband/ffi/neurosdk2_bindings.dart`. Verify `dart run ffigen` is reproducible and `flutter analyze` is clean.
-- [ ] 2.2 Add `NeuroSdkLibrary.open()`, which loads `libneurosdk2.dylib` and checks that every bound symbol resolves. Verify with a macOS integration test that it loads inside the built app, and that a missing symbol produces a clear error.
-- [ ] 2.3 Write a throwaway debug screen on the FFI bindings. It scans with `[SensorLEHeadband, SensorLEBrainBit, SensorLEBrainBit2]` and prints each device's name, serial, `SensFamily` and `SensModel`. Verify against the real Mindo, and record the reported family (expected `SensorLEHeadband` = 11) and model in `docs/hardware.md`.
-- [ ] 2.4 From the same screen, connect to Mindo through the callback shim (2.6).
+- [x] 2.2 Add `NeuroSdkLibrary.open()`, which loads `libneurosdk2.dylib` and checks that every bound symbol resolves. Verify with a macOS integration test that it loads inside the built app, and that a missing symbol produces a clear error.
+- [x] 2.3 Write a throwaway debug screen on the FFI bindings. It scans with `[SensorLEHeadband, SensorLEBrainBit, SensorLEBrainBit2]` and prints each device's name, serial, `SensFamily` and `SensModel`. Verify against the real Mindo, and record the reported family (expected `SensorLEHeadband` = 11) and model in `docs/hardware.md`.
+- [x] 2.4 From the same screen, connect to Mindo through the callback shim (2.6).
   - Stream `HeadbandResistData` for 30 s, then `HeadbandSignalData` for 60 s, and save the signal to a CSV in the app support dir.
   - Verify the values are in the volt range at about 250 Hz (also check with `readSamplingFrequencySensor`).
   - Record the observed resistance ranges for good and poor contact in `docs/hardware.md`.
@@ -29,7 +29,7 @@
 
 - [x] 3.1 Define the `HeadbandSource` interface, `EegSample`, `ContactQuality`, `ConnectionState` and `DeviceInfo` models. Verify they compile, with unit tests for the ohm→quality mapping (good <500 kΩ, fair <2 MΩ, poor otherwise or infinite).
 - [x] 3.2 Implement `SimulatedHeadbandSource`: synthetic 4-channel EEG with controllable alpha/beta mix (focus level), contact quality, battery and forced disconnects. Verify with unit tests that the sample rate is 250 Hz and that setting focus high or low shifts `relAttention` in the matching direction through `EmotionalMath`.
-- [ ] 3.3 Implement `NeuroSdkHeadbandSource` on the FFI bindings, behind a thin `NeuroSdkApi` wrapper so it can be faked.
+- [x] 3.3 Implement `NeuroSdkHeadbandSource` on the FFI bindings, behind a thin `NeuroSdkApi` wrapper so it can be faked.
   - Scan with a 15 s timeout; connect with a 60 s timeout (Mindo may need several createSensor attempts).
   - Pick Headband, BrainBit or BrainBit2 signal/resist callbacks by the reported `SensFamily`.
   - Switch between resist and signal modes via `execCommandSensor`.
@@ -38,13 +38,13 @@
 
   Verify with unit tests on a fake `NeuroSdkApi` (family dispatch, timeouts, dispose), and manually with Mindo that scan, connect, contact quality and battery all appear. Log the result in `docs/hardware.md`.
 - [x] 3.4 Implement the reconnection policy (retry every 5 s for 60 s, then disconnected with a notification). Verify with `fake_async` unit tests for "brief signal loss" and "headband gone" using a fake SDK wrapper.
-- [ ] 3.5 Detect Bluetooth off or permission denied and expose an actionable error. Verify by denying Bluetooth for the app in System Settings: the app shows the guidance message instead of scanning.
-- [ ] 3.6 Persist the last connected device and offer one-click connect on launch. Verify with a unit test on the settings repository and manually by relaunching the app.
+- [x] 3.5 Detect Bluetooth off or permission denied and expose an actionable error. Verify by denying Bluetooth for the app in System Settings: the app shows the guidance message instead of scanning.
+- [x] 3.6 Persist the last connected device and offer one-click connect on launch. Verify with a unit test on the settings repository and manually by relaunching the app.
 - [x] 3.7 Build the Connect screen: scan list, connection state, per-electrode contact quality, battery with a ≤15% warning, and the simulated-device option in debug builds only. Verify with widget tests using `SimulatedHeadbandSource`.
 
 ## 4. Focus tracking (spec: focus-tracking)
 
-- [ ] 4.1 Define the `FocusEstimator` interface and an `EmotionalMathEstimator` that builds the T3−O1 and T4−O2 bipolars, pushes in batches every 100 ms, and exposes calibration percent, `relAttention`, `relRelaxation` (the focus index) and artifact flags. Verify with a unit test on the 2.5 fixture.
+- [x] 4.1 Define the `FocusEstimator` interface and an `EmotionalMathEstimator` that builds the T3−O1 and T4−O2 bipolars, pushes in batches every 100 ms, and exposes calibration percent, `relAttention`, `relRelaxation` (the focus index) and artifact flags. Verify with a unit test on the 2.5 fixture.
 - [x] 4.2 Implement `FocusEngine`: 1 Hz score publishing, an EMA with τ≈3 s, `unavailable` during artifacts with the EMA held, and per-side signal quality. Verify with unit tests for one outlier reading (dampened), artifact → unavailable → resume within 3 s, and the update rate.
 - [x] 4.3 Implement the calibration flow: a gate that needs every electrode at fair or better, a 6 s calibration with progress, and failure after 60 s with a reason and restart. Verify with `fake_async` tests for the success, poor-contact-blocks and disturbed-fails scenarios.
 - [x] 4.4 Implement `FocusStateMachine` (distracted < T ≤ neutral < T+15 ≤ focused). Verify with table-driven unit tests, including a threshold change taking effect on the next update.
@@ -54,8 +54,8 @@
 
 ## 5. Audio feedback (spec: focus-audio-feedback)
 
-- [ ] 5.1 Add CC0 or royalty-free loopable `birds.m4a`, `ocean.m4a` and `end_chime.m4a` under `assets/sounds/`, with sources and licenses in `assets/sounds/LICENSES.md`. Verify each loops without an audible gap with `just_audio` on macOS.
-- [ ] 5.2 Define the `AudioOutput` interface and a `JustAudioOutput` implementation with play/loop, stop and volume stepping every 50 ms for 2 s fades. Verify manually with a debug button that fades are smooth.
+- [x] 5.1 Add CC0 or royalty-free loopable `birds.m4a`, `ocean.m4a` and `end_chime.m4a` under `assets/sounds/`, with sources and licenses in `assets/sounds/LICENSES.md`. Verify each loops without an audible gap with `just_audio` on macOS.
+- [x] 5.2 Define the `AudioOutput` interface and a `JustAudioOutput` implementation with play/loop, stop and volume stepping every 50 ms for 2 s fades. Verify manually with a debug button that fades are smooth.
 - [x] 5.3 Implement `DropTracker`: a drop after `distracted` has lasted the trigger delay, a recovery after `focused` has lasted 3 s, with neutral and unavailable leaving it unchanged. Verify with `fake_async` unit tests for sustained drop, momentary dip, neutral hold and unavailable hold.
 - [x] 5.4 Implement the design D6a gain policy as a pure function:
   - Alert mode: silent with no drop; deficit-scaled while a drop is active.
@@ -73,11 +73,11 @@
 - [x] 6.3 Implement `SessionRepository`: one JSON file per session in the app support dir, a header-only history list (newest first), and delete. Verify with unit tests using a temp directory, including a round trip of summary and timeline.
 - [x] 6.4 Build the live session view: score, state, an `fl_chart` graph growing at 1 Hz, elapsed and remaining time, connection, per-side signal quality, the feedback mode, and a feedback playing/muted indicator with a mute button. Verify with a widget test driven by `SimulatedHeadbandSource`.
 - [x] 6.5 Build the summary screen and the history list with an open/delete confirmation. Verify with widget tests that a past session shows its saved stats and graph and that delete removes it.
-- [ ] 6.6 Add the menu bar indicator with `tray_manager` (state and score, Open, Mute, End session) and hide-to-tray with `window_manager`. Verify manually: hide the window mid-session, then mute and end from the menu bar.
-- [ ] 6.7 Confirm no network entitlement or networking dependency is present. Verify that `com.apple.security.network.client` is absent from the entitlements and that a full simulated session works with Wi-Fi off.
+- [x] 6.6 Add the menu bar indicator with `tray_manager` (state and score, Open, Mute, End session) and hide-to-tray with `window_manager`. Verify manually: hide the window mid-session, then mute and end from the menu bar.
+- [x] 6.7 Confirm no network entitlement or networking dependency is present. Verify that `com.apple.security.network.client` is absent from the entitlements and that a full simulated session works with Wi-Fi off.
 
 ## 7. Integration and docs
 
 - [x] 7.1 Add an integration test (`integration_test/`) that runs a full simulated session in each feedback mode. In alert mode, a forced focus drop starts the sound and a recovery stops it. In continuous mode, the sound plays while focused, goes silent on the drop and returns on recovery. In both, end the session and check the summary appears in history. Verify `flutter test integration_test -d macos` passes.
 - [ ] 7.2 Run a 25-minute real session with the Mindo band, and record in `docs/hardware.md` the false-alarm rate and the tuned threshold, EMA and resistance defaults. Verify defaults are updated in code if they changed.
-- [ ] 7.3 Write `README.md` covering setup (Flutter version, `flutter run -d macos`), hardware pairing tips, the simulator, and the privacy/wellness note. Verify a clean clone builds by following it.
+- [x] 7.3 Write `README.md` covering setup (Flutter version, `flutter run -d macos`), hardware pairing tips, the simulator, and the privacy/wellness note. Verify a clean clone builds by following it.
