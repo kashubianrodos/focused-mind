@@ -233,7 +233,9 @@ cache, so the focus maths in the tests is the real vendor library.
 ## CI and releases
 
 `.github/workflows/android.yml` builds `FocusedMind-<version>.apk` on every
-push and pull request, and attaches it to the release on `v` tags.
+push and pull request, and attaches it to the release on `v` tags. It also
+builds `FocusedMind-<version>.aab` (a workflow artifact) to upload to Google
+Play, where the app's package name is `com.kashubianrodos.focusedmind`.
 Optional repository secrets sign it with your own key, so new versions
 install over old ones:
 
@@ -243,6 +245,8 @@ install over old ones:
 | `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | Its passwords and alias |
 
 Keep the keystore safe: an app signed with a lost key can't be updated.
+On Google Play it is the upload key (Play App Signing holds the app
+signing key), so a lost one can be reset through Play Console support.
 
 `.github/workflows/ios.yml` builds the iPhone app without code signing on
 every push and pull request, packages it as
