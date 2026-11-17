@@ -23,21 +23,23 @@ class AppServices {
     required this.settingsRepository,
     required this.settings,
     required this.recordRaw,
+    required this.testMode,
     required this.sessions,
     required this.export,
     required this.connection,
     required this.feedback,
     required this.session,
     required this.audio,
-    this.simulator,
+    required this.simulator,
   }) {
     session.phase.addListener(() {
       if (session.phase.value == SessionPhase.ended) historyVersion.value++;
     });
   }
 
-  /// Builds the production object graph. The simulated headband is offered
-  /// in debug builds only (headband-connection spec). Real headbands go
+  /// Builds the production object graph. The simulated headband is always
+  /// offered when [includeSimulator] is set (debug builds, tests) and
+  /// otherwise only in Test mode (headband-connection spec). Real headbands go
   /// through neurosdk2 unless [includeDevices] is false (tests: loading the
   /// SDK in the test host blocks on Bluetooth).
   static Future<AppServices> create({
@@ -52,7 +54,10 @@ class AppServices {
     final settingsRepository = await SettingsRepository.open();
     final settings = SettingsController(settingsRepository);
     final recordRaw = RecordRawSetting(settingsRepository);
-    final simulator = includeSimulator ? SimulatedHeadbandSource() : null;
+    final testMode = TestModeSetting(settingsRepository);
+    final simulator = SimulatedHeadbandSource(
+      enabled: () => includeSimulator || testMode.value,
+    );
     final sources = <HeadbandSource, Set<HeadbandFamily>>{
       if (includeDevices)
         NeuroSdkHeadbandSource(FfiNeuroSdkApi.new): {
@@ -61,7 +66,7 @@ class AppServices {
           HeadbandFamily.brainBit2,
         },
       for (final (s, families) in deviceSources) s: families,
-      ?simulator: {HeadbandFamily.simulated},
+      simulator: {HeadbandFamily.simulated},
     };
     final connection = HeadbandConnection(MultiHeadbandSource(sources));
     final output = audio ?? JustAudioOutput();
@@ -84,6 +89,7 @@ class AppServices {
       settingsRepository: settingsRepository,
       settings: settings,
       recordRaw: recordRaw,
+      testMode: testMode,
       sessions: repository,
       export: ExportService(repository, pickFolder: pickExportFolder),
       connection: connection,
@@ -97,13 +103,14 @@ class AppServices {
   final SettingsRepository settingsRepository;
   final SettingsController settings;
   final RecordRawSetting recordRaw;
+  final TestModeSetting testMode;
   final SessionRepository sessions;
   final ExportService export;
   final HeadbandConnection connection;
   final FeedbackController feedback;
   final SessionController session;
   final AudioOutput audio;
-  final SimulatedHeadbandSource? simulator;
+  final SimulatedHeadbandSource simulator;
 
   /// Bumped whenever the stored session history changes.
   final ValueNotifier<int> historyVersion = ValueNotifier(0);

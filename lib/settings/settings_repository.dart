@@ -18,6 +18,7 @@ class SettingsRepository {
   static const _lastDeviceKey = 'last_device';
   static const _noticeKey = 'wellness_notice_seen';
   static const _recordRawKey = 'record_raw_signal';
+  static const _testModeKey = 'test_mode';
   static const _lastKindKey = 'last_session_kind';
 
   final SharedPreferences _prefs;
@@ -59,6 +60,12 @@ class SettingsRepository {
   Future<void> saveRecordRawSignal(bool on) =>
       _prefs.setBool(_recordRawKey, on);
 
+  /// Whether scans also list the simulated headband (headband-connection
+  /// spec); off by default.
+  bool get testMode => _prefs.getBool(_testModeKey) ?? false;
+
+  Future<void> saveTestMode(bool on) => _prefs.setBool(_testModeKey, on);
+
   /// The type of the last session started; the start screen preselects it
   /// (meditation-sessions spec). Focus until a session has been started.
   SessionKind get lastSessionKind =>
@@ -78,6 +85,19 @@ class RecordRawSetting extends ValueNotifier<bool> {
   Future<void> update(bool on) async {
     value = on;
     await _repository.saveRecordRawSignal(on);
+  }
+}
+
+/// The "Test mode" setting: offers the simulated headband so the app can be
+/// tried without a band. Saved immediately; applies from the next scan.
+class TestModeSetting extends ValueNotifier<bool> {
+  TestModeSetting(this._repository) : super(_repository.testMode);
+
+  final SettingsRepository _repository;
+
+  Future<void> update(bool on) async {
+    value = on;
+    await _repository.saveTestMode(on);
   }
 }
 

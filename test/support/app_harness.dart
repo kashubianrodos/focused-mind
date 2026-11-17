@@ -32,6 +32,7 @@ Future<AppHarness> pumpApp(
   FocusEstimator Function()? createEstimator,
   PickFolder? pickExportFolder,
   Size size = const Size(1280, 1000),
+  bool includeSimulator = true,
 }) async {
   SharedPreferences.setMockInitialValues({
     if (noticeSeen) 'wellness_notice_seen': true,
@@ -46,7 +47,7 @@ Future<AppHarness> pumpApp(
   final repo = repository ?? MemorySessionRepository();
   final estimators = <FakeEstimator>[];
   final services = await AppServices.create(
-    includeSimulator: true,
+    includeSimulator: includeSimulator,
     includeDevices: false,
     audio: audio,
     sessionRepository: repo,

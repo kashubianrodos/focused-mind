@@ -2,7 +2,7 @@
 
 A macOS, Android and iPhone app that reads EEG from a BrainBit-family
 headband (developed against the **Mindo** band), estimates in real time how
-focused or calm you are, and guides you with a soundscape (birds or ocean).
+focused or calm you are, and guides you with a soundscape (birds, ocean or forest).
 
 <table align="center">
   <tr>
@@ -213,7 +213,11 @@ flutter run -d macos
 ```
 
 Debug builds offer a **Simulated headband** in the scan list, so the whole app
-(calibration, focus score, feedback, sessions) works without hardware.
+(calibration, focus score, feedback, sessions) works without hardware. In
+release builds (App Store, TestFlight, APK) turn on **Settings › Data › Test
+mode** to get the same simulated headband. Its focus holds steady for the
+first minute, long enough to calibrate, then drifts up and down over
+two-minute cycles so the score and the feedback sound visibly change.
 
 ## Tests
 

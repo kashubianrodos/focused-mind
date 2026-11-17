@@ -12,6 +12,28 @@ import '../support/native_libs.dart';
 void main() {
   setUpAll(loadVendorLibraries);
 
+  test('wander holds focus for a minute, then drifts', () {
+    fakeAsync((async) {
+      final sim = SimulatedHeadbandSource()..wander = true;
+      sim.connect(SimulatedHeadbandSource.device);
+      async.elapse(const Duration(seconds: 1));
+      sim.setMode(StreamMode.signal);
+      async.elapse(const Duration(seconds: 50));
+      expect(sim.focus, 0.5);
+      async.elapse(const Duration(seconds: 40)); // 30 s into the cycle: peak
+      expect(sim.focus, greaterThan(0.85));
+      async.elapse(const Duration(seconds: 60)); // 90 s: trough
+      expect(sim.focus, lessThan(0.15));
+      sim.dispose();
+    });
+  });
+
+  test('a disabled simulator lists nothing', () async {
+    final sim = SimulatedHeadbandSource(enabled: () => false);
+    expect(await sim.scan().toList(), [<DeviceInfo>[]]);
+    sim.dispose();
+  });
+
   test('streams 250 samples per second in signal mode', () {
     fakeAsync((async) {
       final sim = SimulatedHeadbandSource();

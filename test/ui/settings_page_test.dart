@@ -116,11 +116,26 @@ void main() {
     expect(h.services.settings.value.mono, isTrue);
     expect(h.services.settingsRepository.loadFeedback().mono, isTrue);
     final preview = find.byKey(const ValueKey('preview-birds'));
-    await tester.ensureVisible(preview);
+    await tester.scrollUntilVisible(preview, -300);
     await tester.pump();
     await tester.tap(preview);
     await tester.pump();
     expect(h.audio.previewMono, [true]);
+    await shutDown(tester, h);
+  });
+
+  testWidgets('test mode is off by default and persists', (tester) async {
+    final h = await pumpApp(tester);
+    await openSettings(tester);
+    final toggle = find.byKey(const ValueKey('test-mode'));
+    await tester.scrollUntilVisible(toggle, 300);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+    await tester.pump();
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+    await tester.tap(toggle);
+    await tester.pump();
+    expect(h.services.testMode.value, isTrue);
+    expect(h.services.settingsRepository.testMode, isTrue);
     await shutDown(tester, h);
   });
 
