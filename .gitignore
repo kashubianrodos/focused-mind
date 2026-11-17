@@ -47,3 +47,6 @@ app.*.map.json
 **/Pods/
 **/xcuserdata/
 
+
+# Source recordings for tool/generate_sounds.py (only the .m4a output is committed)
+/*.mp3
