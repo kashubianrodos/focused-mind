@@ -11,3 +11,6 @@ headers must be updated together with the `neurosdk2` version pin in
 
 The headers are C++ (typed enums, default arguments), so ffigen parses them in
 C++ mode; all bound functions are declared `extern "C"`.
+
+The headers are © 2025 BrainBit LLC under the MIT License; see `LICENSE`
+(copied from the same package).

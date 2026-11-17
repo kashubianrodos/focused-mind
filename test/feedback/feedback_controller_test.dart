@@ -160,6 +160,21 @@ void main() {
     });
   });
 
+  test('toggling mono mid-session reloads and resumes the loop', () {
+    fakeAsync((async) {
+      create(alert);
+      controller.update(score: 0, dropActive: true);
+      async.elapse(const Duration(seconds: 2));
+      expect(audio.playing, isTrue);
+      final plays = audio.plays;
+      controller.applySettings(alert.copyWith(mono: true));
+      async.flushMicrotasks();
+      expect(audio.loadedMono, isTrue);
+      expect(audio.plays, plays + 1);
+      expect(audio.playing, isTrue);
+    });
+  });
+
   test('stop fades out', () {
     fakeAsync((async) {
       create(alert);

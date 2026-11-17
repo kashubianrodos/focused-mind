@@ -55,12 +55,22 @@ class SettingsPage extends ConsumerWidget {
                         key: ValueKey('preview-${sound.name}'),
                         tooltip: 'Preview',
                         icon: const Icon(Icons.play_circle_outline),
-                        onPressed: () =>
-                            services.audio.preview(sound, s.volume),
+                        onPressed: () => services.audio.preview(
+                          sound,
+                          s.volume,
+                          mono: s.mono,
+                        ),
                       ),
                     ),
                 ],
               ),
+            ),
+            SwitchListTile(
+              key: const ValueKey('mono'),
+              title: const Text('Mono sound'),
+              subtitle: const Text('Same sound in both ears'),
+              value: s.mono,
+              onChanged: (v) => update(s.copyWith(mono: v)),
             ),
             const SizedBox(height: 16),
             _SliderRow(
@@ -134,8 +144,23 @@ class SettingsPage extends ConsumerWidget {
             const Text(wellnessNoticeText),
             const SizedBox(height: 8),
             const Text(
-              'Your sessions and settings are stored only on this Mac and are '
-              'never sent anywhere.',
+              'Your sessions and settings are stored only on this device and '
+              'are never sent anywhere.',
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('licenses'),
+                icon: const Icon(Icons.description_outlined),
+                label: const Text('Licenses'),
+                // Lists the LICENSE of every bundled package (incl. the
+                // BrainBit SDK) plus what main() adds to LicenseRegistry.
+                onPressed: () => showLicensePage(
+                  context: context,
+                  applicationName: 'Focused Mind',
+                ),
+              ),
             ),
           ],
         );

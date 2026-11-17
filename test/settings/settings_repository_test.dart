@@ -13,6 +13,7 @@ void main() {
     final s = repo.loadFeedback();
     expect(s.mode, FeedbackMode.alert);
     expect(s.soundscape, Soundscape.birds);
+    expect(s.mono, isFalse);
     expect(s.threshold, 40);
     expect(s.baseline, 50);
     expect(s.triggerDelay, const Duration(seconds: 5));
@@ -37,6 +38,28 @@ void main() {
     expect(reopened.value.mode, FeedbackMode.continuous);
     expect(reopened.value.soundscape, Soundscape.ocean);
     expect(reopened.value.baseline, 62);
+  });
+
+  test('forest and mono round-trip; old JSON without mono is stereo', () {
+    final s = const FeedbackSettings().copyWith(
+      soundscape: Soundscape.forest,
+      mono: true,
+    );
+    expect(FeedbackSettings.fromJson(s.toJson()), s);
+    final old = FeedbackSettings.fromJson({'soundscape': 'ocean'});
+    expect(old.mono, isFalse);
+  });
+
+  test('mono picks the mono asset; forest has a single file', () {
+    expect(
+      Soundscape.birds.assetFor(mono: true),
+      'assets/sounds/birds_mono.m4a',
+    );
+    expect(Soundscape.ocean.assetFor(mono: false), 'assets/sounds/ocean.m4a');
+    expect(
+      Soundscape.forest.assetFor(mono: true),
+      Soundscape.forest.assetFor(mono: false),
+    );
   });
 
   test('values are clamped to their allowed ranges', () {

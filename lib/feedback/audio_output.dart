@@ -8,8 +8,9 @@ import 'feedback_settings.dart';
 /// Audio playback behind an interface so feedback logic can be tested with a
 /// fake (design D2/D7).
 abstract interface class AudioOutput {
-  /// Loads [soundscape] as a seamless loop, ready to [play].
-  Future<void> load(Soundscape soundscape);
+  /// Loads [soundscape] (its [mono] variant if set) as a seamless loop,
+  /// ready to [play].
+  Future<void> load(Soundscape soundscape, {required bool mono});
 
   Future<void> play();
   Future<void> pause();
@@ -18,7 +19,11 @@ abstract interface class AudioOutput {
   Future<void> setVolume(double volume);
 
   /// Plays a few seconds of [soundscape] at [volume] (settings preview).
-  Future<void> preview(Soundscape soundscape, double volume);
+  Future<void> preview(
+    Soundscape soundscape,
+    double volume, {
+    required bool mono,
+  });
 
   /// Plays the end-of-session chime once at [volume].
   Future<void> playChime(double volume);
@@ -31,7 +36,7 @@ class JustAudioOutput implements AudioOutput {
 
   final _loop = AudioPlayer();
   final _oneShot = AudioPlayer();
-  Soundscape? _loaded;
+  String? _loaded;
 
   bool _sessionConfigured = false;
 
@@ -52,12 +57,13 @@ class JustAudioOutput implements AudioOutput {
   }
 
   @override
-  Future<void> load(Soundscape soundscape) async {
+  Future<void> load(Soundscape soundscape, {required bool mono}) async {
     await _configureSession();
-    if (_loaded == soundscape) return;
-    await _loop.setAudioSource(AudioSource.asset(soundscape.asset));
+    final asset = soundscape.assetFor(mono: mono);
+    if (_loaded == asset) return;
+    await _loop.setAudioSource(AudioSource.asset(asset));
     await _loop.setLoopMode(LoopMode.one);
-    _loaded = soundscape;
+    _loaded = asset;
   }
 
   @override
@@ -76,11 +82,15 @@ class JustAudioOutput implements AudioOutput {
       _loop.setVolume(volume.clamp(0.0, 1.0));
 
   @override
-  Future<void> preview(Soundscape soundscape, double volume) async {
+  Future<void> preview(
+    Soundscape soundscape,
+    double volume, {
+    required bool mono,
+  }) async {
     await _configureSession();
     await _oneShot.setAudioSource(
       ClippingAudioSource(
-        child: AudioSource.asset(soundscape.asset),
+        child: AudioSource.asset(soundscape.assetFor(mono: mono)),
         end: previewLength,
       ),
     );

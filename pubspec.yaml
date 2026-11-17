@@ -79,6 +79,9 @@ flutter:
   assets:
     - assets/sounds/birds.m4a
     - assets/sounds/ocean.m4a
+    - assets/sounds/birds_mono.m4a
+    - assets/sounds/ocean_mono.m4a
+    - assets/sounds/forest.m4a
     - assets/sounds/end_chime.m4a
 
   # To add assets to your application, add an assets section, like this:

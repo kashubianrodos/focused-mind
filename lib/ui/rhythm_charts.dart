@@ -114,58 +114,60 @@ class RhythmStackedChart extends StatelessWidget {
       bar(layer((s) => s.theta + s.alpha)),
       bar(layer((_) => 100)),
     ];
-    return LineChart(
-      duration: Duration.zero,
-      LineChartData(
-        minY: 0,
-        maxY: 100,
-        minX: 0,
-        maxX: maxX < 60 ? 60 : maxX,
-        clipData: const FlClipData.all(),
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        lineTouchData: const LineTouchData(enabled: false),
-        lineBarsData: bars,
-        betweenBarsData: [
-          BetweenBarsData(
-            fromIndex: 0,
-            toIndex: 1,
-            color: rhythmColor(Rhythm.alpha),
-          ),
-          BetweenBarsData(
-            fromIndex: 1,
-            toIndex: 2,
-            color: rhythmColor(Rhythm.beta),
-          ),
-        ],
-        titlesData: FlTitlesData(
-          topTitles: const AxisTitles(),
-          rightTitles: const AxisTitles(),
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              interval: 50,
-              getTitlesWidget: valueAxisLabel,
+    return LayoutBuilder(
+      builder: (context, box) => LineChart(
+        duration: Duration.zero,
+        LineChartData(
+          minY: 0,
+          maxY: 100,
+          minX: 0,
+          maxX: maxX < 60 ? 60 : maxX,
+          clipData: const FlClipData.all(),
+          gridData: const FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          lineTouchData: const LineTouchData(enabled: false),
+          lineBarsData: bars,
+          betweenBarsData: [
+            BetweenBarsData(
+              fromIndex: 0,
+              toIndex: 1,
+              color: rhythmColor(Rhythm.alpha),
             ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 24,
-              interval: maxX / 60 <= 10 ? 60 : (maxX / 60 <= 30 ? 300 : 600),
-              // fl_chart always labels the last point too; skip it unless
-              // it lands on the interval, or it overprints its neighbour.
-              getTitlesWidget: (value, meta) =>
-                  value % meta.appliedInterval != 0
-                  ? const SizedBox.shrink()
-                  : SideTitleWidget(
-                      meta: meta,
-                      child: Text(
-                        '${value ~/ 60}m',
-                        style: Theme.of(context).textTheme.labelSmall,
+            BetweenBarsData(
+              fromIndex: 1,
+              toIndex: 2,
+              color: rhythmColor(Rhythm.beta),
+            ),
+          ],
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(),
+            rightTitles: const AxisTitles(),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                interval: 50,
+                getTitlesWidget: valueAxisLabel,
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 24,
+                interval: timeAxisInterval(maxX, box.maxWidth),
+                // fl_chart always labels the last point too; skip it unless
+                // it lands on the interval, or it overprints its neighbour.
+                getTitlesWidget: (value, meta) =>
+                    value % meta.appliedInterval != 0
+                    ? const SizedBox.shrink()
+                    : SideTitleWidget(
+                        meta: meta,
+                        child: Text(
+                          timeAxisLabel(value),
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
         ),

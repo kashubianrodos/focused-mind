@@ -3,6 +3,8 @@ import 'package:focused_mind/feedback/feedback_settings.dart';
 
 class FakeAudioOutput implements AudioOutput {
   Soundscape? loaded;
+  bool? loadedMono;
+  final previewMono = <bool>[];
   bool playing = false;
   double volume = 0;
   final volumes = <double>[];
@@ -12,7 +14,10 @@ class FakeAudioOutput implements AudioOutput {
   int pauses = 0;
 
   @override
-  Future<void> load(Soundscape soundscape) async => loaded = soundscape;
+  Future<void> load(Soundscape soundscape, {required bool mono}) async {
+    loaded = soundscape;
+    loadedMono = mono;
+  }
 
   @override
   Future<void> play() async {
@@ -33,8 +38,14 @@ class FakeAudioOutput implements AudioOutput {
   }
 
   @override
-  Future<void> preview(Soundscape soundscape, double volume) async =>
-      previews.add(soundscape);
+  Future<void> preview(
+    Soundscape soundscape,
+    double volume, {
+    required bool mono,
+  }) async {
+    previews.add(soundscape);
+    previewMono.add(mono);
+  }
 
   @override
   Future<void> playChime(double volume) async => chimes++;
