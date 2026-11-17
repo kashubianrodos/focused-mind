@@ -24,11 +24,27 @@ void main() {
     await shutDown(tester, h);
   });
 
+  testWidgets('release builds list the simulator only in Test mode', (
+    tester,
+  ) async {
+    final h = await pumpApp(tester, includeSimulator: false);
+    await tester.tap(find.byKey(const ValueKey('scan')));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Simulated headband'), findsNothing);
+    expect(find.textContaining('Turn on Test mode'), findsOneWidget);
+
+    await h.services.testMode.update(true);
+    await tester.tap(find.byKey(const ValueKey('scan')));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Simulated headband'), findsOneWidget);
+    await shutDown(tester, h);
+  });
+
   testWidgets('per-electrode contact quality is shown outside a session', (
     tester,
   ) async {
     final h = await pumpApp(tester);
-    h.services.simulator!.ohms[Electrode.t4] = double.infinity;
+    h.services.simulator.ohms[Electrode.t4] = double.infinity;
     await connectSimulator(tester);
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('O1 (back left): good'), findsOneWidget);
@@ -40,7 +56,7 @@ void main() {
   testWidgets('low battery shows a warning', (tester) async {
     final h = await pumpApp(tester);
     await connectSimulator(tester);
-    h.services.simulator!.setBattery(15);
+    h.services.simulator.setBattery(15);
     await tester.pump();
     expect(find.text('Battery low: 15%'), findsOneWidget);
     await shutDown(tester, h);
@@ -75,7 +91,7 @@ void main() {
     tester,
   ) async {
     final h = await pumpApp(tester);
-    h.services.simulator!.connectable = false;
+    h.services.simulator.connectable = false;
     await tester.tap(find.byKey(const ValueKey('scan')));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(find.byKey(const ValueKey('device-SIM-0001')));

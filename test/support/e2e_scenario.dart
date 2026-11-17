@@ -29,7 +29,7 @@ Future<SessionRecord> runSimulatedSession({
   required FeedbackMode mode,
   required Advance advance,
 }) async {
-  final sim = services.simulator!;
+  final sim = services.simulator;
   await services.settings.update(
     services.settings.value.copyWith(mode: mode, volume: 1),
   );
@@ -125,7 +125,7 @@ Future<SessionRecord> runSimulatedMeditation({
   required FakeAudioOutput audio,
   required Advance advance,
 }) async {
-  final sim = services.simulator!;
+  final sim = services.simulator;
   // Alert in settings must not affect a meditation session.
   await services.settings.update(
     services.settings.value.copyWith(mode: FeedbackMode.alert, volume: 1),

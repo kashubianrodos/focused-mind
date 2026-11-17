@@ -8,8 +8,11 @@ import 'models.dart';
 /// contact quality, battery and disconnections. Used in development builds
 /// and in tests (headband-connection spec: "Simulated headband").
 class SimulatedHeadbandSource implements HeadbandSource {
-  SimulatedHeadbandSource({int seed = 7, this.samplingRate = 250})
-    : _random = math.Random(seed) {
+  SimulatedHeadbandSource({
+    int seed = 7,
+    this.samplingRate = 250,
+    this.enabled = _always,
+  }) : _random = math.Random(seed) {
     _oscillators = [
       for (var i = 0; i < 4; i++)
         _ElectrodeOscillators(
@@ -20,6 +23,11 @@ class SimulatedHeadbandSource implements HeadbandSource {
         ),
     ];
   }
+
+  static bool _always() => true;
+
+  /// Whether scans list the simulated device (debug builds or Test mode).
+  final bool Function() enabled;
 
   static const device = DeviceInfo(
     name: 'Simulated headband',
@@ -56,6 +64,11 @@ class SimulatedHeadbandSource implements HeadbandSource {
   /// Simulated resistance per electrode, in ohms.
   Map<Electrode, double> ohms = {for (final e in Electrode.values) e: 150e3};
 
+  /// When true (the in-app demo), [focus] holds at 0.5 for the first minute
+  /// of signal, enough to calibrate, then drifts between 0.1 and 0.9 over
+  /// two-minute cycles so the score and feedback visibly move.
+  bool wander = false;
+
   /// When true, large movement artifacts are mixed into the signal.
   bool artifacts = false;
 
@@ -69,6 +82,7 @@ class SimulatedHeadbandSource implements HeadbandSource {
   @override
   Stream<List<DeviceInfo>> scan() async* {
     yield const [];
+    if (!enabled()) return;
     await Future<void>.delayed(const Duration(milliseconds: 300));
     yield const [device];
   }
@@ -151,6 +165,10 @@ class SimulatedHeadbandSource implements HeadbandSource {
           );
         }
       case StreamMode.signal:
+        if (wander) {
+          final t = _sampleIndex / samplingRate - 60;
+          focus = t < 0 ? 0.5 : 0.5 + 0.4 * math.sin(2 * math.pi * t / 120);
+        }
         final n = samplingRate * batchInterval.inMilliseconds ~/ 1000;
         _signal.add([for (var i = 0; i < n; i++) _nextSample()]);
       case StreamMode.idle:

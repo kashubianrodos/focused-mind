@@ -138,6 +138,21 @@ class SettingsPage extends ConsumerWidget {
                 onChanged: services.recordRaw.update,
               ),
             ),
+            ValueListenableBuilder<bool>(
+              valueListenable: services.testMode,
+              builder: (context, on, _) => SwitchListTile(
+                key: const ValueKey('test-mode'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Test mode'),
+                subtitle: const Text(
+                  'Adds a simulated headband to the scan list, so you can '
+                  'try the app without a band. Its focus drifts up and down '
+                  'every few minutes.',
+                ),
+                value: on,
+                onChanged: services.testMode.update,
+              ),
+            ),
             const SizedBox(height: 32),
             Text('About', style: text.headlineSmall),
             const SizedBox(height: 8),

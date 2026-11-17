@@ -21,6 +21,7 @@ Future<void> main() async {
     );
   });
   final services = await AppServices.create();
+  services.simulator.wander = true;
   if (Platform.isMacOS) {
     await MenuBarController(
       services.session,

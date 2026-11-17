@@ -81,7 +81,8 @@ class _ConnectPanelState extends ConsumerState<ConnectPanel> {
     final last = services.settingsRepository.loadLastDevice();
     final lastUsable =
         last != null &&
-        (last.family != HeadbandFamily.simulated || services.simulator != null);
+        (last.family != HeadbandFamily.simulated ||
+            services.simulator.enabled());
 
     return ValueListenableBuilder(
       valueListenable: connection.state,
@@ -137,7 +138,9 @@ class _ConnectPanelState extends ConsumerState<ConnectPanel> {
                     padding: EdgeInsets.only(top: 12),
                     child: Text(
                       'No headband found. Make sure it is switched on and '
-                      'charged, keep it close to your Mac, then scan again.',
+                      'charged, keep it close to this device, then scan '
+                      'again. No headband? Turn on Test mode in Settings to '
+                      'try the app with a simulated one.',
                     ),
                   ),
                 if (_error != null)

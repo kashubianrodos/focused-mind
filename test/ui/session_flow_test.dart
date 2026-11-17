@@ -19,13 +19,13 @@ void main() {
   ) async {
     final h = await pumpApp(tester);
     await connectSimulator(tester);
-    h.services.simulator!.ohms[Electrode.o2] = 5e6;
+    h.services.simulator.ohms[Electrode.o2] = 5e6;
     await tester.tap(find.byKey(const ValueKey('start-session')));
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('Checking the signal'), findsOneWidget);
     expect(find.text('O2 (back right): poor'), findsOneWidget);
 
-    h.services.simulator!.ohms[Electrode.o2] = 100e3;
+    h.services.simulator.ohms[Electrode.o2] = 100e3;
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(milliseconds: 1000));
     expect(find.text('Calibrating'), findsOneWidget);
@@ -73,7 +73,7 @@ void main() {
     await connectSimulator(tester);
     await startSession(tester);
     await tester.pump(const Duration(seconds: 5));
-    h.services.simulator!.dropLink(restoreAfter: const Duration(seconds: 8));
+    h.services.simulator.dropLink(restoreAfter: const Duration(seconds: 8));
     await tester.pump(const Duration(seconds: 1));
     expect(find.textContaining('session paused'), findsOneWidget);
     await tester.pump(const Duration(seconds: 12));

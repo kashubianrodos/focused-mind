@@ -81,8 +81,16 @@ The app SHALL show the headband's battery level while connected and warn the use
 - **THEN** the app shows a low-battery warning
 
 ### Requirement: Simulated headband
-The app SHALL offer a simulated headband, available in development builds, that behaves like a connected device and produces EEG-like data with controllable focus level, contact quality and disconnections.
+The app SHALL offer a simulated headband that behaves like a connected device and produces EEG-like data with controllable focus level, contact quality and disconnections. Development builds always list it when scanning; other builds list it only when the user turns on "Test mode" in settings (off by default, remembered across launches). In the app, its focus level holds steady for the first minute and then drifts up and down, so the score and feedback visibly change.
 
 #### Scenario: Run without hardware
 - **WHEN** a developer selects the simulated headband
 - **THEN** the app connects to it and the rest of the app (calibration, focus score, audio feedback, sessions) works as with a real band
+
+#### Scenario: Test mode in a release build
+- **WHEN** a user without a headband turns on Test mode and scans
+- **THEN** the simulated headband is listed and works as in development builds
+
+#### Scenario: Test mode off in a release build
+- **WHEN** Test mode is off in a release build and the user scans
+- **THEN** the simulated headband is not listed, and the empty-scan message points to Test mode
