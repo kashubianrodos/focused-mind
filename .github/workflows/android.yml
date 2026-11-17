@@ -1,6 +1,6 @@
 name: Android
 
-# Builds the APK on every push and pull request; a `v*` tag (e.g. v0.2.0)
+# Builds the APK and the Play app bundle (AAB) on every push and pull request; a `v*` tag (e.g. v0.2.0)
 # also attaches it to the GitHub release. Tests run in the Test workflow; versions
 # come from tool/ci_version.sh, shared with the iOS workflow.
 on:
@@ -73,10 +73,29 @@ jobs:
             --build-number "${{ steps.version.outputs.build }}"
           mv build/app/outputs/flutter-apk/app-release.apk "FocusedMind-${{ steps.version.outputs.version }}.apk"
 
+      # App bundle for Google Play, signed with the same release key (the
+      # Play upload key).
+      - name: Build app bundle
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          flutter build appbundle --release \
+            --build-name "${{ steps.version.outputs.name }}" \
+            --build-number "${{ steps.version.outputs.build }}"
+          mv build/app/outputs/bundle/release/app-release.aab "FocusedMind-${{ steps.version.outputs.version }}.aab"
+
       - uses: actions/upload-artifact@v7
         with:
           name: FocusedMind-${{ steps.version.outputs.version }}.apk
           path: FocusedMind-${{ steps.version.outputs.version }}.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: FocusedMind-${{ steps.version.outputs.version }}.aab
+          path: FocusedMind-${{ steps.version.outputs.version }}.aab
           if-no-files-found: error
 
       - name: Publish release
