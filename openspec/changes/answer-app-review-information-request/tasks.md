@@ -33,7 +33,7 @@
 ## 4. Release 0.4.3
 
 - [x] 4.1 Bump `pubspec.yaml` to 0.4.3, commit, tag `v0.4.3` and push. Verify the iOS workflow's "Upload to TestFlight" succeeds, and rerun it if GitHub runner capacity cancels it.
-- [ ] 4.2 Ask the user to install 0.4.3 from TestFlight on their iPhone (latest iOS) and run through the recording script once as QA, with a real band and with the simulated headband. Record any bug they find as a new task before going on.
+- [x] 4.2 Ask the user to install 0.4.3 from TestFlight on their iPhone (latest iOS) and run through the recording script once as QA, with a real band and with the simulated headband. Record any bug they find as a new task before going on.
 
 ## 5. Recording and resubmission
 
