@@ -60,7 +60,11 @@ class MultiHeadbandSource implements HeadbandSource {
             s.scan().listen(
               (devices) {
                 latest[s] = devices;
-                out.add([for (final l in latest.values) ...l]);
+                // In [sources] order, so real headbands come before the
+                // simulator whichever source answers first.
+                out.add([
+                  for (final source in sources.keys) ...?latest[source],
+                ]);
               },
               onError: out.addError,
               onDone: () {

@@ -212,10 +212,10 @@ flutter pub get
 flutter run -d macos
 ```
 
-Debug builds offer a **Simulated headband** in the scan list, so the whole app
-(calibration, focus score, feedback, sessions) works without hardware. In
-release builds (App Store, TestFlight, APK) turn on **Settings › Data › Test
-mode** to get the same simulated headband. Its focus holds steady for the
+Every build (including App Store, TestFlight and APK releases) offers a
+**Simulated headband** in the scan list, below any real headbands and even
+with Bluetooth off, so the whole app (calibration, focus score, feedback,
+sessions) works without hardware. Its focus holds steady for the
 first minute, long enough to calibrate, then drifts up and down over
 two-minute cycles so the score and the feedback sound visibly change.
 

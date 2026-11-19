@@ -85,7 +85,10 @@ class HeadbandConnection {
       unawaited(sub?.cancel());
       sub = null;
       await source.stopScan();
-      if (!out.isClosed) await out.close();
+      // Not awaited: when the listener cancels, the done event is never
+      // delivered and awaiting it would stall the cancel (and a connect
+      // started mid-scan).
+      if (!out.isClosed) unawaited(out.close());
     }
 
     out = StreamController<List<DeviceInfo>>(
@@ -94,7 +97,9 @@ class HeadbandConnection {
           out.add,
           onError: (Object e, StackTrace st) {
             out.addError(e, st);
-            finish();
+            // Without Bluetooth the scan goes on, so sources that don't need
+            // it (the simulator) still list their devices.
+            if (e is! BluetoothUnavailableException) finish();
           },
           onDone: finish,
         );

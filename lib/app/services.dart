@@ -23,7 +23,6 @@ class AppServices {
     required this.settingsRepository,
     required this.settings,
     required this.recordRaw,
-    required this.testMode,
     required this.sessions,
     required this.export,
     required this.connection,
@@ -37,13 +36,13 @@ class AppServices {
     });
   }
 
-  /// Builds the production object graph. The simulated headband is always
-  /// offered when [includeSimulator] is set (debug builds, tests) and
-  /// otherwise only in Test mode (headband-connection spec). Real headbands go
+  /// Builds the production object graph. The simulated headband is offered
+  /// in every build (headband-connection spec); tests that need a scan with
+  /// real devices only set [includeSimulator] to false. Real headbands go
   /// through neurosdk2 unless [includeDevices] is false (tests: loading the
   /// SDK in the test host blocks on Bluetooth).
   static Future<AppServices> create({
-    bool includeSimulator = kDebugMode,
+    bool includeSimulator = true,
     bool includeDevices = true,
     List<(HeadbandSource, Set<HeadbandFamily>)> deviceSources = const [],
     AudioOutput? audio,
@@ -54,10 +53,7 @@ class AppServices {
     final settingsRepository = await SettingsRepository.open();
     final settings = SettingsController(settingsRepository);
     final recordRaw = RecordRawSetting(settingsRepository);
-    final testMode = TestModeSetting(settingsRepository);
-    final simulator = SimulatedHeadbandSource(
-      enabled: () => includeSimulator || testMode.value,
-    );
+    final simulator = SimulatedHeadbandSource(enabled: () => includeSimulator);
     final sources = <HeadbandSource, Set<HeadbandFamily>>{
       if (includeDevices)
         NeuroSdkHeadbandSource(FfiNeuroSdkApi.new): {
@@ -89,7 +85,6 @@ class AppServices {
       settingsRepository: settingsRepository,
       settings: settings,
       recordRaw: recordRaw,
-      testMode: testMode,
       sessions: repository,
       export: ExportService(repository, pickFolder: pickExportFolder),
       connection: connection,
@@ -103,7 +98,6 @@ class AppServices {
   final SettingsRepository settingsRepository;
   final SettingsController settings;
   final RecordRawSetting recordRaw;
-  final TestModeSetting testMode;
   final SessionRepository sessions;
   final ExportService export;
   final HeadbandConnection connection;

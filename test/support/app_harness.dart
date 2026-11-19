@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:focused_mind/headband/headband_source.dart';
+import 'package:focused_mind/headband/models.dart';
 import 'package:focused_mind/app/app.dart';
 import 'package:focused_mind/app/services.dart';
 import 'package:focused_mind/focus/focus_estimator.dart';
@@ -33,6 +35,7 @@ Future<AppHarness> pumpApp(
   PickFolder? pickExportFolder,
   Size size = const Size(1280, 1000),
   bool includeSimulator = true,
+  List<(HeadbandSource, Set<HeadbandFamily>)> deviceSources = const [],
 }) async {
   SharedPreferences.setMockInitialValues({
     if (noticeSeen) 'wellness_notice_seen': true,
@@ -49,6 +52,7 @@ Future<AppHarness> pumpApp(
   final services = await AppServices.create(
     includeSimulator: includeSimulator,
     includeDevices: false,
+    deviceSources: deviceSources,
     audio: audio,
     sessionRepository: repo,
     pickExportFolder: pickExportFolder,

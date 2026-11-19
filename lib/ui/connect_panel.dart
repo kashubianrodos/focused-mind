@@ -133,14 +133,16 @@ class _ConnectPanelState extends ConsumerState<ConnectPanel> {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _connect(d),
                   ),
-                if (_scanned && _found.isEmpty && _error == null)
+                if (_scanned &&
+                    _error == null &&
+                    _found.every((d) => d.family == HeadbandFamily.simulated))
                   const Padding(
                     padding: EdgeInsets.only(top: 12),
                     child: Text(
                       'No headband found. Make sure it is switched on and '
                       'charged, keep it close to this device, then scan '
-                      'again. No headband? Turn on Test mode in Settings to '
-                      'try the app with a simulated one.',
+                      'again. No headband? Pick Simulated headband to try '
+                      'the app.',
                     ),
                   ),
                 if (_error != null)

@@ -43,7 +43,7 @@ PRIVATE BY DESIGN
 No account, no ads, no tracking. All data stays on your device.
 
 REQUIREMENTS
-A BrainBit-family EEG headband connected over Bluetooth, and Android 11 or later. No headband yet? Turn on Settings › Data › Test mode to try the app with a simulated headband.
+A BrainBit-family EEG headband connected over Bluetooth, and Android 11 or later. No headband yet? Pick "Simulated headband" in the scan list to try the app.
 
 The focus and calm scores are estimates for personal wellness use. Focused Relaxed Mind is not a medical device.
 ```
@@ -75,9 +75,8 @@ Add instructions anyway, because review has no headband:
 
 ```
 The app needs a BrainBit-family EEG headband over Bluetooth. To review without one:
-1. Open Settings (bottom bar) › Data and turn on "Test mode".
-2. Go back to Focus and tap Scan: "Simulated headband" appears. Connect to it.
-3. Pick Focus or Meditation, choose a length and tap Start session. After the signal check and calibration, the live score, scale, rhythms and soundscape run from simulated EEG.
+1. On the Focus tab, tap Scan: "Simulated headband" is always listed (also with Bluetooth off). Tap it to connect.
+2. Pick Focus or Meditation, choose a length and tap Start session. After the signal check and calibration, the live score, scale, rhythms and soundscape run from simulated EEG.
 No account or login is needed.
 ```
 
@@ -112,8 +111,8 @@ Type: Connected device.
 The app keeps a foreground service running during a focus or meditation session so it can keep receiving EEG data from the user's Bluetooth headband and play audio feedback while the user switches to other apps or turns the screen off. The service starts only when the user starts a session, shows an ongoing "Focus session running" notification, and stops when the session ends. Without it, Android would stop the Bluetooth stream and the session would be interrupted.
 ```
 
-Video: record about 30 seconds on a phone: start a session (Test mode is
-fine), switch to the home screen, show the "Focus session running"
+Video: record about 30 seconds on a phone: start a session (the simulated
+headband is fine), switch to the home screen, show the "Focus session running"
 notification, return to the app with the session still running. Upload it
 unlisted (e.g. YouTube) and paste the link.
 

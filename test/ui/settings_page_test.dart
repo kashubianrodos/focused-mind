@@ -124,21 +124,6 @@ void main() {
     await shutDown(tester, h);
   });
 
-  testWidgets('test mode is off by default and persists', (tester) async {
-    final h = await pumpApp(tester);
-    await openSettings(tester);
-    final toggle = find.byKey(const ValueKey('test-mode'));
-    await tester.scrollUntilVisible(toggle, 300);
-    await tester.drag(find.byType(ListView).last, const Offset(0, -500));
-    await tester.pump();
-    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
-    await tester.tap(toggle);
-    await tester.pump();
-    expect(h.services.testMode.value, isTrue);
-    expect(h.services.settingsRepository.testMode, isTrue);
-    await shutDown(tester, h);
-  });
-
   testWidgets('licenses button opens the license page', (tester) async {
     final h = await pumpApp(tester);
     await openSettings(tester);

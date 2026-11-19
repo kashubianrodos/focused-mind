@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_mind/headband/models.dart';
 
 import '../support/app_harness.dart';
+import '../support/fake_headband_source.dart';
 
 void main() {
   testWidgets('scan lists the simulated headband and connects to it', (
@@ -24,19 +25,62 @@ void main() {
     await shutDown(tester, h);
   });
 
-  testWidgets('release builds list the simulator only in Test mode', (
-    tester,
-  ) async {
-    final h = await pumpApp(tester, includeSimulator: false);
-    await tester.tap(find.byKey(const ValueKey('scan')));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Simulated headband'), findsNothing);
-    expect(find.textContaining('Turn on Test mode'), findsOneWidget);
-
-    await h.services.testMode.update(true);
+  testWidgets('every build lists the simulator, with a hint when no band '
+      'is found', (tester) async {
+    final h = await pumpApp(tester);
     await tester.tap(find.byKey(const ValueKey('scan')));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Simulated headband'), findsOneWidget);
+    expect(
+      find.textContaining('Pick Simulated headband to try the app'),
+      findsOneWidget,
+    );
+    await shutDown(tester, h);
+  });
+
+  testWidgets('real headbands are listed above the simulator', (tester) async {
+    final real = FakeHeadbandSource();
+    final h = await pumpApp(
+      tester,
+      deviceSources: [
+        (real, {HeadbandFamily.headband}),
+      ],
+    );
+    await tester.tap(find.byKey(const ValueKey('scan')));
+    await tester.pump(const Duration(milliseconds: 500));
+    real.scanController.add([testDevice]);
+    await real.scanController.close();
+    await tester.pump(const Duration(milliseconds: 100));
+    final mindo = tester.getTopLeft(find.text('Mindo')).dy;
+    final sim = tester.getTopLeft(find.text('Simulated headband')).dy;
+    expect(mindo, lessThan(sim));
+    expect(find.textContaining('No headband found'), findsNothing);
+    await shutDown(tester, h);
+  });
+
+  testWidgets('without Bluetooth the simulator is still listed and connects', (
+    tester,
+  ) async {
+    final real = FakeHeadbandSource();
+    final h = await pumpApp(
+      tester,
+      deviceSources: [
+        (real, {HeadbandFamily.headband}),
+      ],
+    );
+    await tester.tap(find.byKey(const ValueKey('scan')));
+    await tester.pump();
+    real.scanController.addError(
+      const BluetoothUnavailableException(BluetoothProblem.permissionDenied),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.textContaining('Privacy & Security'), findsOneWidget);
+    expect(find.text('Simulated headband'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('device-SIM-0001')));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.textContaining('Connected'), findsOneWidget);
     await shutDown(tester, h);
   });
 

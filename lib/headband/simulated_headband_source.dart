@@ -26,7 +26,7 @@ class SimulatedHeadbandSource implements HeadbandSource {
 
   static bool _always() => true;
 
-  /// Whether scans list the simulated device (debug builds or Test mode).
+  /// Whether scans list the simulated device (always, except in tests).
   final bool Function() enabled;
 
   static const device = DeviceInfo(
