@@ -40,7 +40,7 @@
 - [x] 5.1 Ask the user to record a real session following the script, upload it to YouTube as unlisted, and share the URL. Verify it opens without signing in: `curl -sI` returns 200, and the user confirms playback in a private window.
 - [x] 5.2 Replace `<VIDEO_URL>` in `store/app-store/review-notes.md` with the link and commit.
 - [x] 5.3 Through the App Store Connect API: wait for build 0.4.3 to be VALID, rename the version to 0.4.3, attach the build, and set `appStoreReviewDetails.notes` to the notes block. Verify by reading back the version, build and notes.
-- [ ] 5.4 Get the user's go-ahead, then submit for review with the retrying script. If the endpoint returns 500s, the user clicks "Add for Review" in the web UI. Verify the version state is `WAITING_FOR_REVIEW`.
+- [x] 5.4 Get the user's go-ahead, then submit for review with the retrying script. If the endpoint returns 500s, the user clicks "Add for Review" in the web UI. Verify the version state is `WAITING_FOR_REVIEW`.
 - [ ] 5.5 The user replies to the 2.1 message in App Store Connect › App Review, saying the requested information is now in the Review Notes. This is a manual step: the API has no endpoint for review messages.
 
 ## Workflow follow-up
