@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
-import 'app/menu_bar.dart';
 import 'app/services.dart';
 
 Future<void> main() async {
@@ -22,12 +21,6 @@ Future<void> main() async {
   });
   final services = await AppServices.create();
   services.simulator.wander = true;
-  if (Platform.isMacOS) {
-    await MenuBarController(
-      services.session,
-      isMuted: () => services.feedback.muted,
-    ).start();
-  }
   if (Platform.isAndroid) keepAliveDuringSessions(services);
   runApp(
     ProviderScope(
