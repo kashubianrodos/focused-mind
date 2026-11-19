@@ -17,6 +17,13 @@ focused or calm you are, and guides you with a soundscape (birds, ocean or fores
   </tr>
 </table>
 
+## Demo videos
+
+Recorded on an iPhone:
+
+- [Focus session with a real Mindo headband](https://www.youtube.com/shorts/2FkqSHYQ6UI)
+- [Session with the built-in simulated headband](https://www.youtube.com/shorts/6iPETcF3kw8)
+
 ## Features
 
 - **Live score** every second: the focus score (or the calm score in a

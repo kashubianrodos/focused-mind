@@ -2,12 +2,13 @@
 
 The block below is the **Notes** field of *App Review Information* in App
 Store Connect (plain text, 4,000 characters at most). It answers the six
-items App Review asked for under Guideline 2.1 (Information Needed). Replace
-`<VIDEO_URL>` before pushing it.
+items App Review asked for under Guideline 2.1 (Information Needed).
 
 ```
-1. SCREEN RECORDING
-A recording made on a physical iPhone running the latest iOS, starting from launching the app and showing the typical flow with a real headband: <VIDEO_URL>
+1. SCREEN RECORDINGS
+Two recordings made on a physical iPhone running the latest iOS, each starting from launching the app and showing the typical flow:
+- With a real Mindo (BrainBit) headband: https://www.youtube.com/shorts/2FkqSHYQ6UI
+- With the built-in "Simulated headband" (what a reviewer without a headband sees): https://www.youtube.com/shorts/6iPETcF3kw8
 The app has no account registration, login, user-generated content or paid content, so none of these appear in it.
 
 2. PURPOSE AND TARGET AUDIENCE
