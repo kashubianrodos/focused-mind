@@ -15,9 +15,10 @@ import '../test/support/fake_audio_output.dart';
 import '../test/support/memory_session_repository.dart';
 
 /// Task 7.1: a full simulated session in each feedback mode inside the
-/// built macOS app, with the bundled EmotionalMath library.
+/// built app on a connected Android phone or iPhone, with the bundled
+/// EmotionalMath library (it has no iOS simulator slice).
 ///
-/// Run: flutter test integration_test -d macos
+/// Run: `flutter test integration_test -d <device id>` (see `flutter devices`).
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 

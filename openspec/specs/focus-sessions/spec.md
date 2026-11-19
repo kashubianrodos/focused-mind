@@ -37,13 +37,6 @@ During a session the app SHALL show the current focus score and state, a graph o
 - **WHEN** a session is running after calibration
 - **THEN** the graph gains a new point at least every second and the current state is shown as focused, neutral or distracted
 
-### Requirement: Compact always-visible indicator
-While a session runs, the app SHALL show the current focus state in the macOS menu bar so the user can follow it while the main window is hidden.
-
-#### Scenario: Main window hidden
-- **WHEN** the user hides the main window during a session
-- **THEN** the menu bar shows the current focus state and score, and lets the user open the window, mute feedback or end the session
-
 ### Requirement: Session summary
 When a session ends, the app SHALL show a summary with total duration, average focus score, time spent in each focus state, number of focus drops, number of recoveries, longest focused stretch and the session's focus graph.
 

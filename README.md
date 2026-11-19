@@ -1,6 +1,6 @@
 # Focused Mind
 
-A macOS, Android and iPhone app that reads EEG from a BrainBit-family
+An Android and iPhone app that reads EEG from a BrainBit-family
 headband (developed against the **Mindo** band), estimates in real time how
 focused or calm you are, and guides you with a soundscape (birds, ocean or forest).
 
@@ -35,8 +35,8 @@ focused or calm you are, and guides you with a soundscape (birds, ocean or fores
 - **Summary and history**: time per state and per zone, drops or restless
   episodes, the longest focused or calm stretch, and average rhythms.
 - **CSV export** of any session, plus an optional recording of the raw EEG.
-- **Menu bar indicator** on macOS. On phones, sessions keep running in the
-  background.
+- **Background sessions**: a session keeps running with the screen locked or
+  another app in front.
 - **Private**: everything stays on your device.
 
 ## Session modes
@@ -132,14 +132,6 @@ app (`FocusedMind-<version>-unsigned.ipa`); the iPhone app is also
 uploaded to TestFlight. Android and iPhone builds of a release carry the
 same version and build number.
 
-### Mac
-
-There is no ready-made Mac download. Build and run it from source (see
-[Requirements](#requirements) and [Run](#run)), or make a release build
-with `flutter build macos --release`, which writes
-`build/macos/Build/Products/Release/focused_mind.app`. On first scan,
-allow Bluetooth access when macOS asks.
-
 ### Android
 
 Download `FocusedMind-<version>.apk` from the releases page on the
@@ -157,9 +149,8 @@ sessions first.
 
 ### iPhone
 
-The app runs on iPhone (iOS 15 or later; developed for iPhone 15) with the
-same features as on the Mac, except the menu bar indicator. Navigation moves
-to a bottom bar on a phone, and the session keeps running with the screen
+The app runs on iPhone (iOS 15 or later; developed for iPhone 15).
+Navigation is a bottom bar, and the session keeps running with the screen
 locked: the app declares Bluetooth and audio background modes, and the
 feedback sounds play with the silent switch on and mix with your music.
 
@@ -194,7 +185,7 @@ Sideloadly or AltStore.
 
 ## Requirements
 
-- macOS 12 or later
+- A Mac with macOS 12 or later (for iPhone builds and the host tests)
 - For iPhone builds: the iOS platform in Xcode (**Settings › Components**,
   or `xcodebuild -downloadPlatform iOS`)
 - Flutter 3.47+ (Dart 3.13+): `brew install --cask flutter`
@@ -209,7 +200,8 @@ Check with `flutter doctor` (the macOS/Xcode line must be green).
 
 ```sh
 flutter pub get
-flutter run -d macos
+flutter devices          # find the connected phone
+flutter run -d <device>
 ```
 
 Every build (including App Store, TestFlight and APK releases) offers a
@@ -224,7 +216,7 @@ two-minute cycles so the score and the feedback sound visibly change.
 ```sh
 flutter analyze
 flutter test                          # unit + widget + host end-to-end tests
-flutter test integration_test -d macos  # full simulated sessions in the built app
+flutter test integration_test -d <device>  # full simulated sessions on a phone
 ```
 
 Host tests load BrainBit's prebuilt `libEmStArtifacts.dylib` from the pub
@@ -312,7 +304,7 @@ Tags with a `-`, such as `v0.3.0-beta.1`, are marked as pre-releases.
 
 ## Headband
 
-- Switch the band on and keep it close to the Mac, then use **Scan** on the
+- Switch the band on and keep it close to the phone, then use **Scan** on the
   Focus page. The last band you connected is offered as one-click connect.
 - Before each session the app checks electrode contact (O1/O2 at the back,
   T3/T4 at the temples). Move hair aside under any electrode shown as poor.
@@ -322,8 +314,7 @@ Tags with a `-`, such as `v0.3.0-beta.1`, are marked as pre-releases.
   often, raise the baseline in Settings; lower it for stricter feedback.
 - Mindo is reported by the BrainBit SDK as **BrainBit Black** and must be
   paired (bonded) before it connects. Android pairs it on the first
-  connect. macOS has no public API for that, so **the Mac app can't
-  connect to Mindo yet**. See [docs/hardware.md](docs/hardware.md).
+  connect. See [docs/hardware.md](docs/hardware.md).
 
 ## Project layout
 
@@ -334,7 +325,8 @@ Tags with a `-`, such as `v0.3.0-beta.1`, are marked as pre-releases.
 | `lib/focus/` | `EmotionalMath` estimator, `FocusEngine` (calibration, 1 Hz smoothed score and rhythm shares), baseline-centred `ScoreScale` and scale zones, focus states |
 | `lib/feedback/` | Drop/recovery tracking, gain policy for both modes, audio playback |
 | `lib/sessions/` | Session lifecycle, recording, local JSON storage, raw EEG recording, CSV export |
-| `lib/ui/`, `lib/app/` | Screens, app wiring, menu bar (macOS) |
+| `lib/ui/`, `lib/app/` | Screens and app wiring |
+| `archive/macos/` | Discontinued macOS app (runner project and menu bar), kept for reference |
 | `android/` | Android app: Bluetooth permissions, pairing before connect, Downloads folder for export (`MainActivity.kt`) |
 | `third_party/neurosdk2/` | Vendored C headers for the FFI binding (`dart run ffigen --config ffigen.yaml`) |
 | `assets/sounds/` | Soundscapes (generated by `python3 tool/generate_sounds.py`, plus a Pixabay forest recording), see `LICENSES.md` |
