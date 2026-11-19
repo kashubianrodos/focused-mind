@@ -37,7 +37,8 @@ Privacy policy: https://kashubianrodos.github.io/focused-mind/privacy.html
 ## Recording script
 
 Record on a physical iPhone running the latest iOS, with **Control Center ›
-Screen Recording** (long-press it and turn the microphone off). The video is
+Screen Recording** (microphone off). Turn on Do Not Disturb first so no
+notifications appear in the video. The video is
 about 2–3 minutes, with sound on so the soundscape can be heard.
 
 1. Delete the app, reinstall it from TestFlight and start recording on the
@@ -49,8 +50,9 @@ about 2–3 minutes, with sound on so the soundscape can be heard.
 6. Let the signal check and calibration finish.
 7. Show the live score, the scale, the brain rhythms and the soundscape for
    about 30 seconds.
-8. Lock the iPhone for a few seconds, unlock it, and show the session still
-   running.
+8. Swipe up to the home screen for a few seconds (the soundscape keeps
+   playing), then open the app again and show the session still running.
+   Don't lock the iPhone: locking stops the screen recording.
 9. End the session and show the summary.
 10. Open **History**, open the session and **Export** it; show the file in
     Files.
