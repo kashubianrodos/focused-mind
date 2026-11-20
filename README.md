@@ -196,7 +196,8 @@ Sideloadly or AltStore.
 - For iPhone builds: the iOS platform in Xcode (**Settings › Components**,
   or `xcodebuild -downloadPlatform iOS`)
 - Flutter 3.47+ (Dart 3.13+): `brew install --cask flutter`
-- Xcode (full install from the App Store), then
+- Xcode 27 or later (full install from the App Store; App Store Connect
+  requires the iOS 27 SDK from April 2027), then
   `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` and
   `sudo xcodebuild -runFirstLaunch`
 - CocoaPods: `brew install cocoapods`
@@ -250,7 +251,9 @@ signing key), so a lost one can be reset through Play Console support.
 `.github/workflows/ios.yml` builds the iPhone app without code signing on
 every push and pull request, packages it as
 `FocusedMind-<version>-unsigned.ipa` (a run artifact), and attaches it to
-the release on `v` tags.
+the release on `v` tags. Both iOS jobs run on GitHub's `xcode-27` image
+(a preview) with Xcode 27.2 selected explicitly, so every build uses the
+iOS 27 SDK.
 
 Its `testflight` job signs the app and uploads it to TestFlight on `v`
 tags and when started by hand (**Actions › iOS › Run workflow**), with
