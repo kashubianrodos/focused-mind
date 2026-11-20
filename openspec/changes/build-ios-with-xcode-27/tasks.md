@@ -12,7 +12,7 @@
 
 ## 3. Docs
 
-- [ ] 3.1 README: under Requirements, require Xcode 27 or later for iPhone builds. Under CI and releases, say the iOS jobs use the `xcode-27` image with Xcode 27.2 pinned. Verify by reading the diff.
+- [x] 3.1 README: under Requirements, require Xcode 27 or later for iPhone builds. Under CI and releases, say the iOS jobs use the `xcode-27` image with Xcode 27.2 pinned. Verify by reading the diff.
 
 ## 4. Merge and release
 
